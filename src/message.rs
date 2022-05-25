@@ -7,6 +7,8 @@ pub enum Message {
     Distance(f32),
     Gps { longitude: f32, latitude: f32 },
     Channel(u8),
+    Cmd(Command),
 }
 
+#[derive(Debug, Clone, Copy)]
 pub enum Command {}

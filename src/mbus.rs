@@ -1,11 +1,9 @@
-use xtask::bus::Bus;
-
 use crate::message::Message;
+use xtask::bus::*;
 
 /// 消息总线
 static MBUS: Bus<Message> = Bus::new();
 
-pub fn init() {}
-
-pub fn publish() {}
-pub fn subscribe(topic: &str) {}
+pub fn mbus<'a>() -> &'static Bus<'a, Message> {
+    &MBUS
+}
