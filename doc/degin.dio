@@ -4,67 +4,67 @@
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
-                <mxCell id="7" value="SOC&lt;br&gt;risc-v" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-                    <mxGeometry x="210" y="220" width="380" height="40" as="geometry"/>
+                <mxCell id="7" value="SOC&lt;br style=&quot;font-size: 14px;&quot;&gt;risc-v" style="rounded=0;whiteSpace=wrap;html=1;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="210" y="202" width="380" height="40" as="geometry"/>
                 </mxCell>
-                <mxCell id="8" value="gd32vf103xx-hal" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-                    <mxGeometry x="210" y="180" width="180" height="30" as="geometry"/>
+                <mxCell id="8" value="gd32vf103xx-hal" style="rounded=0;whiteSpace=wrap;html=1;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="210" y="168" width="180" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="9" value="riscv/riscv-rt" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-                    <mxGeometry x="400" y="180" width="190" height="30" as="geometry"/>
+                <mxCell id="9" value="riscv/riscv-rt" style="rounded=0;whiteSpace=wrap;html=1;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="400" y="168" width="190" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="10" value="Xtask" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-                    <mxGeometry x="210" y="130" width="380" height="40" as="geometry"/>
+                <mxCell id="10" value="Xtask" style="rounded=0;whiteSpace=wrap;html=1;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="210" y="124" width="380" height="40" as="geometry"/>
                 </mxCell>
-                <mxCell id="11" value="Application" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;" parent="1" vertex="1">
-                    <mxGeometry x="210" y="-110" width="380" height="190" as="geometry"/>
+                <mxCell id="11" value="Application" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="210" y="-103" width="380" height="190" as="geometry"/>
                 </mxCell>
-                <mxCell id="12" value="embedded-hal" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=bottom;" parent="1" vertex="1">
+                <mxCell id="12" value="embedded-hal" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=bottom;fontSize=14;" parent="1" vertex="1">
                     <mxGeometry x="210" y="90" width="380" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="13" value="driver" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;" parent="1" vertex="1">
-                    <mxGeometry x="217.5" y="40" width="372.5" height="60" as="geometry"/>
+                <mxCell id="13" value="driver" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="218.5" y="30" width="362.5" height="70" as="geometry"/>
                 </mxCell>
-                <mxCell id="14" value="Task" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;" parent="1" vertex="1">
+                <mxCell id="14" value="Task" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontSize=14;" parent="1" vertex="1">
                     <mxGeometry x="217.5" y="-80" width="55" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="15" value="Task" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;" parent="1" vertex="1">
+                <mxCell id="15" value="Task" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontSize=14;" parent="1" vertex="1">
                     <mxGeometry x="278" y="-80" width="55" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="16" value="Task" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;" parent="1" vertex="1">
+                <mxCell id="16" value="Task" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontSize=14;" parent="1" vertex="1">
                     <mxGeometry x="340" y="-80" width="55" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="17" value="SVPWM" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                <mxCell id="17" value="SVPWM" style="rounded=0;whiteSpace=wrap;html=1;fontSize=14;" parent="1" vertex="1">
                     <mxGeometry x="440" y="-10" width="55" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="18" value="Motor" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                <mxCell id="18" value="Motor" style="rounded=0;whiteSpace=wrap;html=1;fontSize=14;" parent="1" vertex="1">
                     <mxGeometry x="230" y="60" width="55" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="22" value="ICM" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                <mxCell id="22" value="ICM" style="rounded=0;whiteSpace=wrap;html=1;fontSize=14;" parent="1" vertex="1">
                     <mxGeometry x="300" y="60" width="55" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="26" value="Peripherals" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-                    <mxGeometry x="210" y="270" width="380" height="50" as="geometry"/>
+                <mxCell id="26" value="Peripherals" style="rounded=0;whiteSpace=wrap;html=1;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="210" y="246" width="380" height="50" as="geometry"/>
                 </mxCell>
-                <mxCell id="28" value="Task" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;" parent="1" vertex="1">
+                <mxCell id="28" value="Task" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontSize=14;" parent="1" vertex="1">
                     <mxGeometry x="402" y="-80" width="55" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="29" value="Task" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;" parent="1" vertex="1">
+                <mxCell id="29" value="Task" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontSize=14;" parent="1" vertex="1">
                     <mxGeometry x="466" y="-80" width="55" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="31" value="Task" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;" parent="1" vertex="1">
-                    <mxGeometry x="527" y="-81" width="55" height="60" as="geometry"/>
+                <mxCell id="31" value="Task" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="527" y="-80" width="55" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="32" value="FOC" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                <mxCell id="32" value="FOC" style="rounded=0;whiteSpace=wrap;html=1;fontSize=14;" parent="1" vertex="1">
                     <mxGeometry x="230" y="-10" width="55" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="33" value="PID" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                <mxCell id="33" value="PID" style="rounded=0;whiteSpace=wrap;html=1;fontSize=14;" parent="1" vertex="1">
                     <mxGeometry x="300" y="-10" width="55" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="35" value="KLM" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                <mxCell id="35" value="KLM" style="rounded=0;whiteSpace=wrap;html=1;fontSize=14;" parent="1" vertex="1">
                     <mxGeometry x="370" y="-10" width="55" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="36" value="ICM" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                <mxCell id="36" value="ICM" style="rounded=0;whiteSpace=wrap;html=1;fontSize=14;" parent="1" vertex="1">
                     <mxGeometry x="370" y="60" width="55" height="30" as="geometry"/>
                 </mxCell>
             </root>
