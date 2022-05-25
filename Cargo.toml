@@ -1,0 +1,10 @@
+[package]
+name = "xpilot"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+mpu6050-dmp = { git = "https://github.com/gqf2008/mpu6050-dmp" }
+xtask = {git ="https://github.com/gqf2008/xtask"}
