@@ -1,17 +1,18 @@
-use hal::pac::Peripherals;
-use hal::prelude::*;
+use hal::gpio::gpioa::{PA1, PA2};
+use hal::gpio::gpioc::PC13;
+use hal::gpio::Active;
 use xtask::bsp::longan_nano::hal;
 use xtask::bsp::longan_nano::led::{rgb, BLUE, GREEN, RED};
 
 static mut LED: Option<(RED, GREEN, BLUE)> = None;
 
-pub(crate) unsafe fn init() {
-    let dp = Peripherals::steal();
-    let rcu = super::rcu::rcu();
-    let gpioa = dp.GPIOA.split(rcu);
-    let gpioc = dp.GPIOC.split(rcu);
-
-    let (red, green, blue) = rgb(gpioc.pc13, gpioa.pa1, gpioa.pa2);
+pub(crate) unsafe fn init<X, Y, Z>(red: PC13<X>, green: PA1<Y>, blue: PA2<Z>)
+where
+    X: Active,
+    Y: Active,
+    Z: Active,
+{
+    let (red, green, blue) = rgb(red, green, blue);
     LED.replace((red, green, blue));
 }
 

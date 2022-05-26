@@ -9,10 +9,9 @@ mod message;
 extern crate alloc;
 
 use xtask::arch::riscv::rt;
-use xtask::prelude::*;
 
 /// 初始化外设驱动
-#[rt::pre_init]
+// #[rt::pre_init]
 unsafe fn init() {
     extern "C" {
         static _sheap: u8;
@@ -24,6 +23,9 @@ unsafe fn init() {
 
 #[rt::entry]
 fn main() -> ! {
+    unsafe {
+        init();
+    }
     // 启动应用
     app::start();
     mbus::mbus().subscribe("a.b", |_topic, _msg| {});

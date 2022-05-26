@@ -1,4 +1,4 @@
-use mpu6050::Mpu6050;
+use mpu6050_dmp::{address::Address, sensor::Mpu6050};
 use xtask::bsp::longan_nano::hal::{
     gpio::{
         gpiob::{PB10, PB11},
@@ -27,7 +27,7 @@ pub(crate) unsafe fn init(
         i2c1,
         (scl, sda),
         Mode::Fast {
-            frequency: 400_000.hz(),
+            frequency: 50_000.hz(),
             duty_cycle: DutyCycle::Ratio2to1,
         },
         rcu,
@@ -36,11 +36,25 @@ pub(crate) unsafe fn init(
         1000,
         1000,
     );
-    let mut mpu = Mpu6050::new(i2c);
-    mpu.init(&mut Delay::new()).ok();
-    MPU.replace(mpu);
+    // let mut mpu = Mpu6050::new(i2c, Address::default()).unwrap();
+    // mpu.initialize_dmp(&mut delay).ok();
+    match Mpu6050::new(i2c, Address::default()) {
+        Ok(mut mpu) => match mpu.initialize_dmp(&mut Delay::new()) {
+            Ok(_) => {
+                MPU.replace(mpu);
+
+                log::info!("mpu6050 init dmp ok");
+            }
+            Err(err) => {
+                log::error!("mpu6050 init dmp error {:?}", err);
+            }
+        },
+        Err(err) => {
+            log::error!("mpu6050 init error {:?}", err);
+        }
+    }
 }
 
-pub(crate) fn mpu() -> &'static mut MPU {
-    unsafe { MPU.as_mut().unwrap() }
+pub(crate) fn mpu() -> Option<&'static mut MPU> {
+    unsafe { MPU.as_mut() }
 }

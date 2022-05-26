@@ -111,6 +111,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "cast"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "37b2a672a2cb129a2e41c10b1224bb368f9f37a2b16b612598138befd7b37eb5"
+
+[[package]]
 name = "cfg-if"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -315,7 +321,6 @@ dependencies = [
 [[package]]
 name = "gd32vf103-pac"
 version = "0.4.0"
-source = "git+https://github.com/gqf2008/xtask#45454da292850457b2f8f5f4372303cedebd1bb4"
 dependencies = [
  "riscv 0.8.0",
  "vcell",
@@ -324,9 +329,8 @@ dependencies = [
 [[package]]
 name = "gd32vf103xx-hal"
 version = "0.5.0"
-source = "git+https://github.com/gqf2008/xtask#45454da292850457b2f8f5f4372303cedebd1bb4"
 dependencies = [
- "cast",
+ "cast 0.2.7",
  "embedded-dma",
  "embedded-hal",
  "gd32vf103-pac",
@@ -1014,6 +1018,7 @@ version = "0.1.0"
 dependencies = [
  "bare-metal 1.0.0",
  "bit_field",
+ "cast 0.2.7",
  "crossbeam",
  "drogue-esp8266",
  "embedded-hal",
@@ -1021,6 +1026,7 @@ dependencies = [
  "icm20689",
  "lazy_static",
  "log",
+ "mpu6050",
  "mpu6050-dmp",
  "nb 1.0.0",
  "profont 0.6.1",
@@ -1031,10 +1037,10 @@ dependencies = [
 [[package]]
 name = "xtask"
 version = "0.1.0"
-source = "git+https://github.com/gqf2008/xtask#45454da292850457b2f8f5f4372303cedebd1bb4"
 dependencies = [
  "bare-metal 1.0.0",
  "bit_field",
+ "cast 0.3.0",
  "cortex-a",
  "cortex-m 0.7.4",
  "cortex-m-rt",
