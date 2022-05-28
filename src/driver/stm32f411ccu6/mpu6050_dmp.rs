@@ -27,7 +27,7 @@ pub(crate) unsafe fn init(
         i2c1,
         (scl, sda),
         Mode::Fast {
-            frequency: 50_000.hz(),
+            frequency: 400_000.hz(),
             duty_cycle: DutyCycle::Ratio2to1,
         },
         rcu,

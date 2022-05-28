@@ -36,11 +36,15 @@ pub(crate) unsafe fn init(
         1000,
         1000,
     );
-    let mut mpu = Mpu6050::new(i2c);
+    let mut mpu = Mpu6050::new_with_sens(
+        i2c,
+        mpu6050::device::AccelRange::G2,
+        mpu6050::device::GyroRange::D2000,
+    );
     mpu.init(&mut Delay::new()).ok();
     MPU.replace(mpu);
 }
 
-pub(crate) fn mpu() -> &'static mut MPU {
-    unsafe { MPU.as_mut().unwrap() }
+pub(crate) fn mpu() -> Option<&'static mut MPU> {
+    unsafe { MPU.as_mut() }
 }

@@ -1,7 +1,7 @@
 pub mod delay;
 pub mod led;
 pub mod mpu6050;
-pub mod mpu6050_dmp;
+
 mod rcu;
 
 use hal::gpio::GpioExt;
