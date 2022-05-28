@@ -13,28 +13,45 @@ fn sampling() {
             .priority(1)
             .stack_size(1024)
             .spawn(move || {
-                let mut count = 0;
+                mpu.set_accel_x_self_test(true).ok();
+                mpu.set_accel_y_self_test(true).ok();
+                mpu.set_accel_z_self_test(true).ok();
+                let (mut pitch_offset, mut roll_offset, mut yaw_offset) = (0.0, 0.0, 0.0);
+                for _ in 0..300 {
+                    if let Ok(gyro) = mpu.get_gyro() {
+                        if let Ok(acc) = mpu.get_acc() {
+                            let (gx, gy, gz) = (gyro.x, gyro.y, gyro.z);
+                            let (ax, ay, az) = (acc.x, acc.y, acc.z);
+                            let (y, p, r) = unsafe { yaw_pitch_roll(gx, gy, gz, ax, ay, az) };
+                            pitch_offset = p;
+                            roll_offset = r;
+                            yaw_offset = y;
+                        }
+                    }
+
+                    xtask::sleep_ms(10);
+                }
 
                 loop {
-                    // get gyro data, scaled with sensitivity
-                    if let Some(gyro) = mpu.get_gyro().ok() {
-                        //log::info!("gyro: {:?}", gyro);
-                        let (gx, gy, gz) = (gyro.x, gyro.y, gyro.z);
-                        // get accelerometer data, scaled with sensitivity
-                        if let Some(acc) = mpu.get_acc().ok() {
-                            // log::info!("accel: {:?}", acc);
-                            let (ax, ay, az) = (acc.x, acc.y, acc.z);
-                            let (p, r, y) = unsafe {
-                                ypr(
-                                    gx as f64, gy as f64, gz as f64, ax as f64, ay as f64,
-                                    az as f64,
-                                )
-                            };
-                            count += 1;
-                            if count % 100 == 0 {
-                                log::info!("pitch:{}, roll:{} yaw:{}", p, r, y);
-                                count = 0;
+                    match mpu.get_gyro() {
+                        Ok(gyro) => match mpu.get_acc() {
+                            Ok(acc) => {
+                                let (gx, gy, gz) = (gyro.x, gyro.y, gyro.z);
+                                let (ax, ay, az) = (acc.x, acc.y, acc.z);
+                                let (y, p, r) = unsafe { yaw_pitch_roll(gx, gy, gz, ax, ay, az) };
+                                log::info!(
+                                    " yaw:{}, pitch:{}, roll:{}",
+                                    y - yaw_offset,
+                                    p - pitch_offset,
+                                    r - roll_offset,
+                                );
                             }
+                            Err(err) => {
+                                log::error!("acc error {:?}", err);
+                            }
+                        },
+                        Err(err) => {
+                            log::error!("gyro error {:?}", err);
                         }
                     }
                     xtask::sleep_ms(10);
@@ -43,39 +60,39 @@ fn sampling() {
     }
 }
 
-unsafe fn ypr(
-    mut gx: f64,
-    mut gy: f64,
-    mut gz: f64,
-    mut ax: f64,
-    mut ay: f64,
-    mut az: f64,
-) -> (f64, f64, f64) {
+unsafe fn yaw_pitch_roll(
+    mut gx: f32,
+    mut gy: f32,
+    mut gz: f32,
+    mut ax: f32,
+    mut ay: f32,
+    mut az: f32,
+) -> (f32, f32, f32) {
     #[allow(non_upper_case_globals)]
-    const Kp: f64 = 100.0; // 比例增益支配率收敛到加速度计/磁强计
+    const Kp: f32 = 100.0; // 比例增益支配率收敛到加速度计/磁强计
     #[allow(non_upper_case_globals)]
-    const Ki: f64 = 0.002; // 积分增益支配率的陀螺仪偏见的衔接
+    const Ki: f32 = 0.002; // 积分增益支配率的陀螺仪偏见的衔接
 
-    const HALF_T: f64 = 0.001; // 采样周期的一半
+    const HALF_T: f32 = 0.001; // 采样周期的一半
     #[allow(non_upper_case_globals)]
-    static mut q0: f64 = 1.0; // 四元数的元素，代表估计方向
+    static mut q0: f32 = 1.0; // 四元数的元素，代表估计方向
     #[allow(non_upper_case_globals)]
-    static mut q1: f64 = 0.0;
+    static mut q1: f32 = 0.0;
     #[allow(non_upper_case_globals)]
-    static mut q2: f64 = 0.0;
+    static mut q2: f32 = 0.0;
     #[allow(non_upper_case_globals)]
-    static mut q3: f64 = 0.0;
+    static mut q3: f32 = 0.0;
 
     // 按比例缩小积分误差
     #[allow(non_upper_case_globals)]
-    static mut ex_int: f64 = 0.0;
+    static mut ex_int: f32 = 0.0;
     #[allow(non_upper_case_globals)]
-    static mut ey_int: f64 = 0.0;
+    static mut ey_int: f32 = 0.0;
     #[allow(non_upper_case_globals)]
-    static mut ez_int: f64 = 0.0;
+    static mut ez_int: f32 = 0.0;
 
     // 测量正常化
-    let mut norm = sqrt(ax * ax + ay * ay + az * az);
+    let mut norm = sqrtf(ax * ax + ay * ay + az * az);
     ax = ax / norm; //单位化
     ay = ay / norm;
     az = az / norm;
@@ -107,29 +124,21 @@ unsafe fn ypr(
     q3 = q3 + (q0 * gz + q1 * gy - q2 * gx) * HALF_T;
 
     // 正常化四元
-    norm = sqrt(q0 * q0 + q1 * q1 + q2 * q2 + q3 * q3);
+    norm = sqrtf(q0 * q0 + q1 * q1 + q2 * q2 + q3 * q3);
     q0 = q0 / norm;
     q1 = q1 / norm;
     q2 = q2 / norm;
     q3 = q3 / norm;
 
-    // ANGLE.Yaw = atan2(2 * q1 * q2 + 2 * q0 * q3, -2 * q2*q2 - 2 * q3* q3 + 1)* 57.3; // yaw
-    // ANGLE.Y= asin(-2 * q1 * q3 + 2 * q0* q2)* 57.3; // pitch
-    // ANGLE.X= atan2(2 * q2 * q3 + 2 * q0 * q1, -2 * q1 * q1 - 2 * q2* q2 + 1)* 57.3; // roll
-
-    let pitch = asin(-2.0 * q1 * q3 + 2.0 * q0 * q2) * 57.3; // y/pitch ,转换为度数
-    let roll = atan2(
-        2.0 * q2 * q3 + 2.0 * q0 * q1,
-        -2.0 * q1 * q1 - 2.0 * q2 * q2 + 1.0,
-    ) * 57.3; //x/roll
-    let yaw = atan2(
+    let yaw = atan2f(
         2.0 * (q1 * q2 + q0 * q3),
         q0 * q0 + q1 * q1 - q2 * q2 - q3 * q3,
-    ) * 57.3; //z/yaw
+    ) * 57.3; //y/yaw
 
-    // let yaw = atan2(
-    //     2.0 * (q1 * q2 + q0 * q3),
-    //     -2.0 * q2 * q2 - 2.0 * q3 * q3 + 1.0,
-    // ) * 57.3;
-    (pitch, roll, yaw)
+    let pitch = asinf(-2.0 * q1 * q3 + 2.0 * q0 * q2) * 57.3; // x/pitch ,转换为度数
+    let roll = atan2f(
+        2.0 * q2 * q3 + 2.0 * q0 * q1,
+        -2.0 * q1 * q1 - 2.0 * q2 * q2 + 1.0,
+    ) * 57.3; //z/roll
+    (yaw, pitch, roll)
 }

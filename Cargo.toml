@@ -18,6 +18,7 @@ icm20689 = {git = "https://github.com/tstellanova/icm20689"}
 lazy_static = {version = "1.4.0", default-features = false, features = ["spin_no_std"]}
 libm = "0.2.2"
 log = "0.4.17"
+mavlink = {version = "0.10.1", default-features = false, features = ["embedded", "all-dialects"]}
 mpu6050 = "0.1.5"
 mpu6050-dmp = {git = "https://github.com/gqf2008/mpu6050-dmp-rs"}
 nalgebra = {version = "0.24.1", default-features = false}

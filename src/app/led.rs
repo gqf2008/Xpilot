@@ -9,7 +9,7 @@ pub fn start() {
     blue.off();
     TaskBuilder::new()
         .name("r")
-        .priority(16)
+        .priority(1)
         .spawn(move || loop {
             red.toggle();
             xtask::sleep_ms(500);
@@ -17,7 +17,7 @@ pub fn start() {
 
     TaskBuilder::new()
         .name("g")
-        .priority(16)
+        .priority(1)
         .spawn(move || loop {
             green.toggle();
             xtask::sleep_ms(500);
@@ -25,7 +25,7 @@ pub fn start() {
 
     TaskBuilder::new()
         .name("b")
-        .priority(16)
+        .priority(1)
         .spawn(move || loop {
             blue.toggle();
             xtask::sleep_ms(500);
