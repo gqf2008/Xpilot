@@ -10,7 +10,7 @@ fn sampling() {
     if let Some(mpu) = driver::mpu6050::mpu() {
         TaskBuilder::new()
             .name("icm")
-            .priority(1)
+            .priority(2)
             .stack_size(1024)
             .spawn(move || {
                 mpu.set_accel_x_self_test(true).ok();
@@ -54,7 +54,7 @@ fn sampling() {
                             log::error!("gyro error {:?}", err);
                         }
                     }
-                    xtask::sleep_ms(10);
+                    xtask::sleep_ms(20);
                 }
             });
     }
@@ -140,5 +140,6 @@ unsafe fn yaw_pitch_roll(
         2.0 * q2 * q3 + 2.0 * q0 * q1,
         -2.0 * q1 * q1 - 2.0 * q2 * q2 + 1.0,
     ) * 57.3; //z/roll
+
     (yaw, pitch, roll)
 }
