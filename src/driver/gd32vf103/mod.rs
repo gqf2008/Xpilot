@@ -1,6 +1,7 @@
-pub mod delay;
 pub mod led;
 pub mod mpu6050;
+pub mod pwm;
+pub mod serial;
 
 mod rcu;
 
@@ -30,7 +31,8 @@ pub unsafe fn init() {
             signature::flash_size_kb(),
             signature::sram_size_kb(),
         );
-        led::init(pc.pc13, pa.pa1, pa.pa2);
+        pwm::init(dp.TIMER1, (pa.pa1, pa.pa2), &mut afio, rcu);
+        // led::init(pc.pc13, pa.pa1, pa.pa2);
         mpu6050::init((pb.pb10, pb.pb11), rcu, dp.I2C1);
         //mpu6050_dmp::init((pb.pb10, pb.pb11), rcu, dp.I2C1);
     }

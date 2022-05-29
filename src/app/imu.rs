@@ -10,7 +10,7 @@ fn sampling() {
     if let Some(mpu) = driver::mpu6050::mpu() {
         TaskBuilder::new()
             .name("icm")
-            .priority(2)
+            .priority(1)
             .stack_size(1024)
             .spawn(move || {
                 mpu.set_accel_x_self_test(true).ok();
@@ -28,7 +28,6 @@ fn sampling() {
                             yaw_offset = y;
                         }
                     }
-
                     xtask::sleep_ms(10);
                 }
 
@@ -39,12 +38,12 @@ fn sampling() {
                                 let (gx, gy, gz) = (gyro.x, gyro.y, gyro.z);
                                 let (ax, ay, az) = (acc.x, acc.y, acc.z);
                                 let (y, p, r) = unsafe { yaw_pitch_roll(gx, gy, gz, ax, ay, az) };
-                                log::info!(
-                                    " yaw:{}, pitch:{}, roll:{}",
-                                    y - yaw_offset,
-                                    p - pitch_offset,
-                                    r - roll_offset,
-                                );
+                                // log::info!(
+                                //     " yaw:{}, pitch:{}, roll:{}",
+                                //     y - yaw_offset,
+                                //     p - pitch_offset,
+                                //     r - roll_offset,
+                                // );
                             }
                             Err(err) => {
                                 log::error!("acc error {:?}", err);

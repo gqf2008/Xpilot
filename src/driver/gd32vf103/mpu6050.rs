@@ -22,7 +22,6 @@ pub(crate) unsafe fn init(
 ) {
     let scl = pins.0.into_alternate_open_drain();
     let sda = pins.1.into_alternate_open_drain();
-
     let i2c = BlockingI2c::i2c1(
         i2c1,
         (scl, sda),
