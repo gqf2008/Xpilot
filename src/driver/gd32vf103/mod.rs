@@ -32,7 +32,7 @@ pub unsafe fn init() {
             signature::sram_size_kb(),
         );
         pwm::init(dp.TIMER1, (pa.pa1, pa.pa2), &mut afio, rcu);
-        // led::init(pc.pc13, pa.pa1, pa.pa2);
+        led::init(Some(pc.pc13), None, None);
         mpu6050::init((pb.pb10, pb.pb11), rcu, dp.I2C1);
         //mpu6050_dmp::init((pb.pb10, pb.pb11), rcu, dp.I2C1);
     }

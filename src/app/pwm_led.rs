@@ -9,7 +9,7 @@ pub fn start() {
     pwm1.set_period(1000.hz());
     pwm1.enable(Channel::CH1);
     pwm1.enable(Channel::CH2);
-    TaskBuilder::new().name("r").priority(1).spawn(|| {
+    TaskBuilder::new().name("g").priority(1).spawn(|| {
         let pwm = driver::pwm::pwm1();
         let max = pwm.get_max_duty();
         let duty = &[
@@ -40,7 +40,7 @@ pub fn start() {
         }
     });
 
-    TaskBuilder::new().name("g").priority(1).spawn(|| {
+    TaskBuilder::new().name("b").priority(1).spawn(|| {
         let pwm = driver::pwm::pwm1();
         let max = pwm.get_max_duty();
         let duty = &[
@@ -69,12 +69,4 @@ pub fn start() {
             xtask::sleep_ms(1000);
         }
     });
-
-    // TaskBuilder::new()
-    //     .name("b")
-    //     .priority(1)
-    //     .spawn(move || loop {
-    //         blue.toggle();
-    //         xtask::sleep_ms(500);
-    //     });
 }

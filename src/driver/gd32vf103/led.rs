@@ -4,42 +4,34 @@ use hal::gpio::Active;
 use xtask::bsp::longan_nano::hal;
 use xtask::bsp::longan_nano::led::{rgb, BLUE, GREEN, RED};
 
-static mut LED: Option<(RED, GREEN, BLUE)> = None;
+static mut LED_RED: Option<RED> = None;
+static mut LED_GREEN: Option<GREEN> = None;
+static mut LED_BLUE: Option<BLUE> = None;
 
-pub(crate) unsafe fn init<X, Y, Z>(red: PC13<X>, green: PA1<Y>, blue: PA2<Z>)
+pub(crate) unsafe fn init<T>(red: Option<PC13<T>>, green: Option<PA1<T>>, blue: Option<PA2<T>>)
 where
-    X: Active,
-    Y: Active,
-    Z: Active,
+    T: Active,
 {
-    let (red, green, blue) = rgb(red, green, blue);
-    LED.replace((red, green, blue));
-}
-
-pub fn led() -> (&'static mut RED, &'static mut GREEN, &'static mut BLUE) {
-    unsafe {
-        let (r, g, b) = LED.as_mut().unwrap();
-        (r, g, b)
+    // let (red, green, blue) = rgb(red, green, blue);
+    if let Some(port) = red {
+        LED_RED.replace(RED::new(port));
+    }
+    if let Some(port) = green {
+        LED_GREEN.replace(GREEN::new(port));
+    }
+    if let Some(port) = blue {
+        LED_BLUE.replace(BLUE::new(port));
     }
 }
 
-pub fn red() -> &'static mut RED {
-    unsafe {
-        let (red, _, _) = LED.as_mut().unwrap();
-        red
-    }
+pub fn red() -> Option<&'static mut RED> {
+    unsafe { LED_RED.as_mut() }
 }
 
-pub fn green() -> &'static mut GREEN {
-    unsafe {
-        let (_, green, _) = LED.as_mut().unwrap();
-        green
-    }
+pub fn green() -> Option<&'static mut GREEN> {
+    unsafe { LED_GREEN.as_mut() }
 }
 
-pub fn blue() -> &'static mut BLUE {
-    unsafe {
-        let (_, _, blue) = LED.as_mut().unwrap();
-        blue
-    }
+pub fn blue() -> Option<&'static mut BLUE> {
+    unsafe { LED_BLUE.as_mut() }
 }
