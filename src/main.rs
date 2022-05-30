@@ -1,5 +1,7 @@
 #![no_std]
 #![no_main]
+#![feature(const_mut_refs)]
+#![feature(const_option)]
 
 mod app;
 mod driver;

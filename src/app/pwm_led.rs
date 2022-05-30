@@ -28,15 +28,15 @@ pub fn start() {
         loop {
             for i in duty {
                 pwm.set_duty(Channel::CH1, *i as u16);
-                //log::info!("duty {} max {}", pwm.get_duty(Channel::CH1), max);
+
                 xtask::sleep_ms(100);
             }
-            xtask::sleep_ms(1000);
+            xtask::sleep_ms(500);
             for i in duty {
                 pwm.set_duty(Channel::CH1, *i as u16);
                 xtask::sleep_ms(100);
             }
-            xtask::sleep_ms(1000);
+            xtask::sleep_ms(500);
         }
     });
 
@@ -61,12 +61,12 @@ pub fn start() {
                 pwm.set_duty(Channel::CH2, *i as u16);
                 xtask::sleep_ms(100);
             }
-            xtask::sleep_ms(1000);
+            xtask::sleep_ms(500);
             for i in duty {
                 pwm.set_duty(Channel::CH2, *i as u16);
                 xtask::sleep_ms(100);
             }
-            xtask::sleep_ms(1000);
+            xtask::sleep_ms(500);
         }
     });
 }

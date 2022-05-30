@@ -1,61 +1,44 @@
-use crate::driver;
+use crate::{mbus::mbus, message::Message};
 use libm::*;
-use xtask::TaskBuilder;
+use xtask::{isr_sprintln, Queue, TaskBuilder};
 
 pub fn start() {
-    sampling();
+    let q = Queue::new();
+    let sender = q.clone();
+    TaskBuilder::new()
+        .name("icm")
+        .priority(1)
+        .stack_size(1024)
+        .spawn(move || sampling(q));
+    mbus().subscribe("/imu6050", move |_, msg| {
+        if let Err(err) = sender.push_back_isr(msg) {
+            isr_sprintln!("error {:?}", err);
+        }
+    });
 }
 
-fn sampling() {
-    if let Some(mpu) = driver::mpu6050::mpu() {
-        TaskBuilder::new()
-            .name("icm")
-            .priority(1)
-            .stack_size(1024)
-            .spawn(move || {
-                mpu.set_accel_x_self_test(true).ok();
-                mpu.set_accel_y_self_test(true).ok();
-                mpu.set_accel_z_self_test(true).ok();
-                let (mut pitch_offset, mut roll_offset, mut yaw_offset) = (0.0, 0.0, 0.0);
-                for _ in 0..300 {
-                    if let Ok(gyro) = mpu.get_gyro() {
-                        if let Ok(acc) = mpu.get_acc() {
-                            let (gx, gy, gz) = (gyro.x, gyro.y, gyro.z);
-                            let (ax, ay, az) = (acc.x, acc.y, acc.z);
-                            let (y, p, r) = unsafe { yaw_pitch_roll(gx, gy, gz, ax, ay, az) };
-                            pitch_offset = p;
-                            roll_offset = r;
-                            yaw_offset = y;
-                        }
+fn sampling(recv: Queue<Message>) {
+    let mut count = 0u64;
+    loop {
+        if let Some(msg) = recv.pop_front() {
+            match msg {
+                Message::Imu6050 {
+                    gx,
+                    gy,
+                    gz,
+                    ax,
+                    ay,
+                    az,
+                } => {
+                    let (y, p, r) = unsafe { yaw_pitch_roll(gx, gy, gz, ax, ay, az) };
+                    if count % 100 == 0 {
+                        log::info!(" yaw:{}, pitch:{}, roll:{}", y, p, r,);
                     }
-                    xtask::sleep_ms(10);
+                    count += 1;
                 }
-
-                loop {
-                    match mpu.get_gyro() {
-                        Ok(gyro) => match mpu.get_acc() {
-                            Ok(acc) => {
-                                let (gx, gy, gz) = (gyro.x, gyro.y, gyro.z);
-                                let (ax, ay, az) = (acc.x, acc.y, acc.z);
-                                let (y, p, r) = unsafe { yaw_pitch_roll(gx, gy, gz, ax, ay, az) };
-                                // log::info!(
-                                //     " yaw:{}, pitch:{}, roll:{}",
-                                //     y - yaw_offset,
-                                //     p - pitch_offset,
-                                //     r - roll_offset,
-                                // );
-                            }
-                            Err(err) => {
-                                log::error!("acc error {:?}", err);
-                            }
-                        },
-                        Err(err) => {
-                            log::error!("gyro error {:?}", err);
-                        }
-                    }
-                    xtask::sleep_ms(20);
-                }
-            });
+                _ => {}
+            }
+        }
     }
 }
 
