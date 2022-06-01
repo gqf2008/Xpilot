@@ -23,6 +23,7 @@ mpu6050 = "0.1.5"
 mpu6050-dmp = {git = "https://github.com/gqf2008/mpu6050-dmp-rs"}
 nalgebra = {version = "0.24.1", default-features = false}
 nb = "1.0.0"
+pid = "3.0.0"
 profont = "0.6.1"
 spin = "0.9.3"
 xtask = {path = "../xtask"}

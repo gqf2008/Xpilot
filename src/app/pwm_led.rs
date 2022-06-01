@@ -29,12 +29,12 @@ pub fn start() {
             for i in duty {
                 pwm.set_duty(Channel::CH1, *i as u16);
 
-                xtask::sleep_ms(100);
+                xtask::sleep_ms(200);
             }
             xtask::sleep_ms(500);
             for i in duty {
                 pwm.set_duty(Channel::CH1, *i as u16);
-                xtask::sleep_ms(100);
+                xtask::sleep_ms(200);
             }
             xtask::sleep_ms(500);
         }
@@ -59,12 +59,12 @@ pub fn start() {
         loop {
             for i in duty {
                 pwm.set_duty(Channel::CH2, *i as u16);
-                xtask::sleep_ms(100);
+                xtask::sleep_ms(200);
             }
             xtask::sleep_ms(500);
             for i in duty {
                 pwm.set_duty(Channel::CH2, *i as u16);
-                xtask::sleep_ms(100);
+                xtask::sleep_ms(200);
             }
             xtask::sleep_ms(500);
         }

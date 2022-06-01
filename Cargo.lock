@@ -657,6 +657,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0c520e05135d6e763148b6426a837e239041653ba7becd2e538c076c738025fc"
 
 [[package]]
+name = "pid"
+version = "3.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d81764342f0ec3d969b9898925e5b0dc31c95466cb70a79a3064b33eb3b5480a"
+dependencies = [
+ "num-traits",
+]
+
+[[package]]
 name = "ppv-lite86"
 version = "0.2.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1104,6 +1113,7 @@ dependencies = [
  "mpu6050-dmp",
  "nalgebra",
  "nb 1.0.0",
+ "pid",
  "profont 0.6.1",
  "spin 0.9.3",
  "xtask",

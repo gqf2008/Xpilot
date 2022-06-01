@@ -1,7 +1,8 @@
+pub mod bldc;
 pub mod led;
 pub mod mpu6050;
-pub mod pwm;
 pub mod serial;
+pub mod servo;
 
 mod rcu;
 
@@ -34,9 +35,15 @@ pub unsafe fn init() {
             signature::flash_size_kb(),
             signature::sram_size_kb(),
         );
-        pwm::init(dp.TIMER1, (pa.pa1, pa.pa2), &mut afio, rcu);
-        led::init(dp.TIMER0, Some(pc.pc13), None, None, rcu);
-        mpu6050::init(dp.EXTI, (pb.pb0, pb.pb10, pb.pb11), rcu, dp.I2C1);
+
+        led::init(Some(pc.pc13), Some(pa.pa1), Some(pa.pa2));
+        bldc::init(
+            dp.TIMER2,
+            (Some(pa.pa6), Some(pa.pa7), Some(pb.pb0), Some(pb.pb1)),
+            &mut afio,
+            rcu,
+        );
+        mpu6050::init(dp.TIMER0, (pb.pb10, pb.pb11), rcu, dp.I2C1);
         //mpu6050_dmp::init((pb.pb10, pb.pb11), rcu, dp.I2C1);
     }
 }

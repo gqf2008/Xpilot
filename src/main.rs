@@ -30,7 +30,6 @@ fn main() -> ! {
     }
     // 启动应用
     app::start();
-    mbus::mbus().subscribe("a.b", |_topic, _msg| {});
     //启动调度器
     xtask::start()
 }
