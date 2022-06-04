@@ -1,12 +1,8 @@
 use crate::driver;
 
 mod imu;
-mod led;
-// mod pwm_led;
 
 pub fn start() {
-    //led::start();
-    // pwm_led::start();
+    //driver::bldc::motor().unlock();
     imu::start();
-    driver::bldc::motor().unlock();
 }

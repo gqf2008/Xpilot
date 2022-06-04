@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram id="HmAXtvBwzVdciYzhRFUI" name="第 1 页">
-        <mxGraphModel dx="576" dy="1572" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+        <mxGraphModel dx="524" dy="1572" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -22,9 +22,6 @@
                 <mxCell id="12" value="embedded-hal" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=bottom;fontSize=14;" parent="1" vertex="1">
                     <mxGeometry x="210" y="90" width="380" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="13" value="driver" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontSize=14;" parent="1" vertex="1">
-                    <mxGeometry x="218.5" y="30" width="362.5" height="70" as="geometry"/>
-                </mxCell>
                 <mxCell id="14" value="Task" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontSize=14;" parent="1" vertex="1">
                     <mxGeometry x="217.5" y="-80" width="55" height="60" as="geometry"/>
                 </mxCell>
@@ -33,15 +30,6 @@
                 </mxCell>
                 <mxCell id="16" value="Task" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontSize=14;" parent="1" vertex="1">
                     <mxGeometry x="340" y="-80" width="55" height="60" as="geometry"/>
-                </mxCell>
-                <mxCell id="17" value="SVPWM" style="rounded=0;whiteSpace=wrap;html=1;fontSize=14;direction=south;" parent="1" vertex="1">
-                    <mxGeometry x="440" y="-11.25" width="70" height="32.5" as="geometry"/>
-                </mxCell>
-                <mxCell id="18" value="Motor" style="rounded=0;whiteSpace=wrap;html=1;fontSize=14;" parent="1" vertex="1">
-                    <mxGeometry x="230" y="60" width="55" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="22" value="IMU" style="rounded=0;whiteSpace=wrap;html=1;fontSize=14;" parent="1" vertex="1">
-                    <mxGeometry x="300" y="60" width="55" height="30" as="geometry"/>
                 </mxCell>
                 <mxCell id="26" value="Peripherals" style="rounded=0;whiteSpace=wrap;html=1;fontSize=14;" parent="1" vertex="1">
                     <mxGeometry x="210" y="246" width="380" height="50" as="geometry"/>
@@ -55,23 +43,38 @@
                 <mxCell id="31" value="Task" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontSize=14;" parent="1" vertex="1">
                     <mxGeometry x="527" y="-80" width="55" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="32" value="FOC" style="rounded=0;whiteSpace=wrap;html=1;fontSize=14;" parent="1" vertex="1">
-                    <mxGeometry x="230" y="-10" width="55" height="30" as="geometry"/>
+                <mxCell id="41" value="MBUS" style="rounded=0;whiteSpace=wrap;html=1;fontSize=14;direction=south;" parent="1" vertex="1">
+                    <mxGeometry x="230" width="340" height="50" as="geometry"/>
                 </mxCell>
-                <mxCell id="33" value="PID" style="rounded=0;whiteSpace=wrap;html=1;fontSize=14;" parent="1" vertex="1">
-                    <mxGeometry x="300" y="-10" width="55" height="30" as="geometry"/>
+                <mxCell id="32" value="FOC" style="rounded=0;whiteSpace=wrap;html=1;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="245" y="-37.5" width="55" height="47.5" as="geometry"/>
+                </mxCell>
+                <mxCell id="17" value="SVPWM" style="rounded=0;whiteSpace=wrap;html=1;fontSize=14;direction=south;" parent="1" vertex="1">
+                    <mxGeometry x="320" y="-37.5" width="70" height="47.5" as="geometry"/>
                 </mxCell>
                 <mxCell id="35" value="KLM" style="rounded=0;whiteSpace=wrap;html=1;fontSize=14;" parent="1" vertex="1">
-                    <mxGeometry x="370" y="-10" width="55" height="30" as="geometry"/>
+                    <mxGeometry x="414" y="-36.25" width="55" height="46.25" as="geometry"/>
+                </mxCell>
+                <mxCell id="33" value="PID" style="rounded=0;whiteSpace=wrap;html=1;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="495" y="-37.5" width="55" height="47.5" as="geometry"/>
+                </mxCell>
+                <mxCell id="13" value="driver" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="218.5" y="40" width="362.5" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="18" value="Motor" style="rounded=0;whiteSpace=wrap;html=1;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="230" y="66" width="55" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="22" value="IMU" style="rounded=0;whiteSpace=wrap;html=1;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="300" y="66" width="55" height="30" as="geometry"/>
                 </mxCell>
                 <mxCell id="36" value="LED" style="rounded=0;whiteSpace=wrap;html=1;fontSize=14;" parent="1" vertex="1">
-                    <mxGeometry x="370" y="60" width="55" height="30" as="geometry"/>
+                    <mxGeometry x="370" y="66" width="55" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="38" value="GPS" style="rounded=0;whiteSpace=wrap;html=1;fontSize=14;" vertex="1" parent="1">
-                    <mxGeometry x="440" y="60" width="55" height="30" as="geometry"/>
+                <mxCell id="38" value="GPS" style="rounded=0;whiteSpace=wrap;html=1;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="440" y="66" width="55" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="40" value="WIFI" style="rounded=0;whiteSpace=wrap;html=1;fontSize=14;" vertex="1" parent="1">
-                    <mxGeometry x="510" y="60" width="55" height="30" as="geometry"/>
+                <mxCell id="40" value="Servo" style="rounded=0;whiteSpace=wrap;html=1;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="510" y="66" width="55" height="30" as="geometry"/>
                 </mxCell>
             </root>
         </mxGraphModel>

@@ -1,8 +1,8 @@
 [env]
 
 [build]
-# target = "thumbv7em-none-eabihf"
-target = "riscv32imac-unknown-none-elf"
+target = "thumbv7em-none-eabihf"
+# target = "riscv32imac-unknown-none-elf"
 
 [target.riscv32imac-unknown-none-elf]
 runner = 'riscv64-unknown-elf-gdb -x openocd.gdb'
@@ -16,6 +16,17 @@ rustflags = [
 runner = "/Volumes/gqf/toolchain/gcc-arm-none-eabi-10-2020-q4-major/bin/arm-none-eabi-gdb -q -x openocd.gdb"
 # runner = "D:\\toolchain\\arm\\bin\\arm-none-eabi-gdb -q -x openocd.gdb"
 rustflags = [
-  # "-Clink-arg=-Tmemory.x",
   "-Clink-arg=-Tlink.x",
 ]
+
+[source.crates-io]
+registry = "git://github.com/rust-lang/crates.io-index"
+replace-with = 'ustc'
+
+# 中国科学技术大学
+[source.ustc]
+registry = "https://mirrors.ustc.edu.cn/crates.io-index"
+
+# 上海交通大学
+[source.sjtu]
+registry = "https://mirrors.sjtug.sjtu.edu.cn/git/crates.io-index"

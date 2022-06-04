@@ -92,7 +92,7 @@ unsafe fn timer0_isr() {
                 pitch += 19.3;
                 roll += -16.3;
                 mbus::mbus().publish_isr(
-                    "/ypr",
+                    "/imu",
                     crate::message::Message::YawPitchRoll { yaw, pitch, roll },
                 )
             }

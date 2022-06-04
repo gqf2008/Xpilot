@@ -1,15 +1,15 @@
 use crate::{driver, mbus::mbus, message::Message};
-use xtask::{bsp::longan_nano::led::Led, isr_sprintln, Queue, TaskBuilder};
+use xtask::{isr_sprintln, Queue, TaskBuilder};
 
 pub fn start() {
     let q = Queue::new();
     let sender = q.clone();
     TaskBuilder::new()
-        .name("icm")
+        .name("pid")
         .priority(1)
         .stack_size(1024)
         .spawn(move || sampling(q));
-    mbus().subscribe("/ypr", move |_, msg| {
+    mbus().subscribe("/imu", move |_, msg| {
         if let Err(err) = sender.push_back_isr(msg) {
             isr_sprintln!("error {:?}", err);
         }
@@ -18,16 +18,15 @@ pub fn start() {
 
 fn sampling(recv: Queue<Message>) {
     let mut count = 0u64;
-
     loop {
         if let Some(msg) = recv.pop_front() {
             match msg {
                 Message::YawPitchRoll { yaw, pitch, roll } => {
                     if count % 100 == 0 {
-                        if let Some(red) = driver::led::red() {
-                            red.toggle();
+                        if let Some(led) = driver::led::blue() {
+                            led.toggle();
                         }
-                        log::info!(" yaw:{}, pitch:{}, roll:{}", yaw, pitch, roll);
+                        log::info!(" yaw:{:.5?}, pitch:{:.5?}, roll:{:.5?}", yaw, pitch, roll);
                     }
                     count += 1;
                 }
