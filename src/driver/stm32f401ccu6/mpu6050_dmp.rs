@@ -2,13 +2,13 @@ use crate::mbus;
 use mpu6050_dmp::{
     address::Address, quaternion::Quaternion, sensor::Mpu6050, yaw_pitch_roll::YawPitchRoll,
 };
-use shared_bus::{BusManager, BusManagerSimple, I2cProxy, NullMutex};
+use shared_bus::{I2cProxy, NullMutex};
 use xtask::bsp::greenpill::hal::timer::CounterHz;
 use xtask::time::Delay;
 use xtask::{
     arch::cortex_m::peripheral::NVIC,
     bsp::greenpill::hal::{
-        gpio::{Alternate, OpenDrain, Pin, PB8, PB9},
+        gpio::{Alternate, OpenDrain, Pin},
         i2c::I2c,
         pac::{interrupt, Interrupt, I2C1, TIM1},
         prelude::*,
@@ -16,18 +16,6 @@ use xtask::{
         timer::{Event, Timer1},
     },
 };
-
-pub type I2CBUS = BusManager<
-    NullMutex<
-        I2c<
-            I2C1,
-            (
-                Pin<'B', 8, Alternate<4, OpenDrain>>,
-                Pin<'B', 9, Alternate<4, OpenDrain>>,
-            ),
-        >,
-    >,
->;
 
 pub type MPU = Mpu6050<
     I2cProxy<
@@ -44,29 +32,29 @@ pub type MPU = Mpu6050<
     >,
 >;
 
-static mut I2C: Option<I2CBUS> = None;
 static mut MPU: Option<MPU> = None;
 static mut TIMER: Option<CounterHz<TIM1>> = None;
 
-pub(crate) unsafe fn init(tim: TIM1, i2c: I2C1, pins: (PB8, PB9), clocks: &Clocks) {
+pub(crate) unsafe fn init(
+    tim: TIM1,
+    i2c: I2cProxy<
+        'static,
+        NullMutex<
+            I2c<
+                I2C1,
+                (
+                    Pin<'B', 8, Alternate<4, OpenDrain>>,
+                    Pin<'B', 9, Alternate<4, OpenDrain>>,
+                ),
+            >,
+        >,
+    >,
+    clocks: &Clocks,
+) {
     log::info!("init mpu6050_dmp");
-    let scl = pins
-        .0
-        .into_alternate()
-        .internal_pull_up(true)
-        .set_open_drain();
-    let sda = pins
-        .1
-        .into_alternate()
-        .internal_pull_up(true)
-        .set_open_drain();
-    I2C.replace(BusManagerSimple::new(i2c.i2c(
-        (scl, sda),
-        400.kHz(),
-        clocks,
-    )));
+
     let mut delay = Delay::new();
-    match Mpu6050::new(I2C.as_ref().unwrap().acquire_i2c(), Address::default()) {
+    match Mpu6050::new(i2c, Address::default()) {
         Ok(mut mpu) => match mpu.initialize_dmp(&mut delay) {
             Ok(_) => {
                 mpu.calibrate_accel(150, &mut delay).ok();

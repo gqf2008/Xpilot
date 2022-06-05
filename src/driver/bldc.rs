@@ -25,6 +25,7 @@ impl<PWM: PwmPin<Duty = u16>> Motor<PWM> {
     /// 锁定马达，绿关，红开
     pub fn lock(&mut self) {
         self.state = State::Locked;
+        self.pwm.disable();
         if let Some(green) = super::led::blue() {
             green.off();
         }
@@ -44,6 +45,7 @@ impl<PWM: PwmPin<Duty = u16>> Motor<PWM> {
         if let Some(green) = super::led::blue() {
             green.on();
         }
+        self.pwm.enable();
     }
 
     /// 最小油门

@@ -18,6 +18,8 @@ pub fn start() {
 
 fn sampling(recv: Queue<Message>) {
     let mut count = 0u64;
+    let mut count_acc = 0u64;
+    let mut count_gpro = 0u64;
     loop {
         if let Some(msg) = recv.pop_front() {
             match msg {
@@ -29,6 +31,24 @@ fn sampling(recv: Queue<Message>) {
                         log::info!(" yaw:{:.5?}, pitch:{:.5?}, roll:{:.5?}", yaw, pitch, roll);
                     }
                     count += 1;
+                }
+                Message::Acc { x, y, z } => {
+                    if count_acc % 100 == 0 {
+                        if let Some(led) = driver::led::blue() {
+                            led.toggle();
+                        }
+                        log::info!(" acc_x:{:.5?}, acc_y:{:.5?}, acc_z:{:.5?}", x, y, z);
+                    }
+                    count_acc += 1;
+                }
+                Message::Gyro { x, y, z } => {
+                    if count_gpro % 100 == 0 {
+                        if let Some(led) = driver::led::blue() {
+                            led.toggle();
+                        }
+                        log::info!(" gyro_x:{:.5?}, gyro_y:{:.5?}, gyro_z:{:.5?}", x, y, z);
+                    }
+                    count_gpro += 1;
                 }
                 _ => {}
             }

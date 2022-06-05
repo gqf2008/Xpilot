@@ -7,7 +7,8 @@ pub struct Servo<PWM> {
 }
 
 impl<PWM: PwmPin<Duty = u16>> Servo<PWM> {
-    pub fn new(pwm: PWM) -> Self {
+    pub fn new(mut pwm: PWM) -> Self {
+        pwm.enable();
         Self { pwm }
     }
 }
