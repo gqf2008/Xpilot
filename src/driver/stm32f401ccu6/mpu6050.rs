@@ -1,4 +1,4 @@
-use crate::driver::mpu6050::*;
+use crate::driver::{mpu6050::*, Accel, Gyro};
 use crate::mbus;
 
 use shared_bus::{I2cProxy, NullMutex};
@@ -77,31 +77,25 @@ unsafe fn TIM1_UP_TIM10() {
             Ok(data) => {
                 mbus::mbus().publish_isr(
                     "/imu",
-                    crate::message::Message::Acc {
+                    crate::message::Message::Accel(Accel {
                         x: data.accel.x,
                         y: data.accel.y,
                         z: data.accel.z,
-                    },
+                    }),
                 );
                 mbus::mbus().publish_isr(
                     "/imu",
-                    crate::message::Message::Gyro {
+                    crate::message::Message::Gyro(Gyro {
                         x: data.gyro.x,
                         y: data.gyro.y,
                         z: data.gyro.z,
-                    },
+                    }),
                 );
-                let (yaw, pitch, roll) = crate::driver::yaw_pitch_roll(
-                    data.gyro.x,
-                    data.gyro.y,
-                    data.gyro.z,
-                    data.accel.x,
-                    data.accel.y,
-                    data.accel.z,
-                );
+                let quate = data.to_quat();
+                mbus::mbus().publish_isr("/imu", crate::message::Message::Quaternion(quate));
                 mbus::mbus().publish_isr(
                     "/imu",
-                    crate::message::Message::YawPitchRoll { yaw, pitch, roll },
+                    crate::message::Message::YawPitchRoll(quate.to_euler()),
                 );
             }
 

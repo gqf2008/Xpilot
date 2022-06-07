@@ -1,4 +1,8 @@
-use crate::{driver, mbus::mbus, message::Message};
+use crate::{
+    driver::{self, Accel, EulerAngle, Gyro},
+    mbus::mbus,
+    message::Message,
+};
 use xtask::{isr_sprintln, Queue, TaskBuilder};
 
 pub fn start() {
@@ -23,7 +27,7 @@ fn sampling(recv: Queue<Message>) {
     loop {
         if let Some(msg) = recv.pop_front() {
             match msg {
-                Message::YawPitchRoll { yaw, pitch, roll } => {
+                Message::YawPitchRoll(EulerAngle { yaw, pitch, roll }) => {
                     if count % 100 == 0 {
                         if let Some(led) = driver::led::blue() {
                             led.toggle();
@@ -32,7 +36,7 @@ fn sampling(recv: Queue<Message>) {
                     }
                     count += 1;
                 }
-                Message::Acc { x, y, z } => {
+                Message::Accel(Accel { x, y, z }) => {
                     if count_acc % 100 == 0 {
                         if let Some(led) = driver::led::blue() {
                             led.toggle();
@@ -41,7 +45,7 @@ fn sampling(recv: Queue<Message>) {
                     }
                     count_acc += 1;
                 }
-                Message::Gyro { x, y, z } => {
+                Message::Gyro(Gyro { x, y, z }) => {
                     if count_gpro % 100 == 0 {
                         if let Some(led) = driver::led::blue() {
                             led.toggle();

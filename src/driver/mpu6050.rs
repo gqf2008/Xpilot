@@ -1,6 +1,6 @@
+use crate::driver::{Accel, Gyro, Quaternion};
 use core::fmt::Formatter;
 use embedded_hal::blocking::i2c::{Write, WriteRead};
-use libm::*;
 pub struct Mpu6050<I2c>
 where
     I2c: Write + WriteRead,
@@ -13,9 +13,8 @@ where
     gyro_range: GyroRange,
     dlpf: DLPF,
     interrupt: bool,
-    mean_imu_raw_data: RawData,
-    gyro_offset: Gyro,
-    mean_filter_fifo: [[i16; 15]; 6],
+    dmp: bool,
+    offset: RawData,
 }
 
 impl<I2c> Mpu6050<I2c>
@@ -28,13 +27,12 @@ where
         Self {
             i2c,
             address: 0x68,
-            acc_range: AccelRange::_4G,
+            acc_range: AccelRange::_2G,
             gyro_range: GyroRange::_2000DEGS,
             dlpf: DLPF::_94HZ,
             interrupt: false,
-            mean_imu_raw_data: Default::default(),
-            gyro_offset: Default::default(),
-            mean_filter_fifo: Default::default(),
+            dmp: false,
+            offset: Default::default(),
         }
     }
     pub fn with_address(mut self, address: u8) -> Self {
@@ -53,13 +51,19 @@ where
         self.dlpf = dlpf;
         self
     }
-    pub fn with_interrupt(mut self, interrupt: bool) -> Self {
-        self.interrupt = interrupt;
+    pub fn with_interrupt(mut self) -> Self {
+        self.interrupt = true;
+        self
+    }
+
+    pub fn with_dmp(mut self) -> Self {
+        self.dmp = true;
         self
     }
 
     pub fn build(mut self) -> Result<Self, Error<I2c>> {
         self.who_am_i()?;
+        self.reset()?;
         self.disable_sleep()?;
         self.set_dlpf(self.dlpf)?;
         self.set_gyro_range(self.gyro_range)?;
@@ -68,7 +72,7 @@ where
             self.set_interrupt_pin_high()?;
             self.enable_data_interrupt()?;
         }
-        self.set_sample_rate_divider(0x00)?; //100hz
+        self.set_sample_rate(100)?; //100hz
         xtask::delay_us(100000);
         Ok(self)
     }
@@ -80,6 +84,7 @@ where
     <I2c as WriteRead>::Error: core::fmt::Debug,
     <I2c as Write>::Error: core::fmt::Debug,
 {
+    // 检查设备地址是否正确
     pub fn who_am_i(&mut self) -> Result<(), Error<I2c>> {
         let id = self.read_register(Register::WhoAmI)?;
         if self.address != id {
@@ -87,6 +92,13 @@ where
         } else {
             Ok(())
         }
+    }
+    pub fn reset(&mut self) -> Result<(), Error<I2c>> {
+        let mut value = self.read_register(Register::PwrMgmt1)?;
+        value |= 1 << 7;
+        self.write_register(Register::PwrMgmt1, value)?;
+        xtask::delay_us(200_000);
+        Ok(())
     }
     // 解除休眠
     pub fn disable_sleep(&mut self) -> Result<(), Error<I2c>> {
@@ -115,109 +127,74 @@ where
         self.write_register(Register::InterruptEnable, 0x01)
     }
 
-    // 设置采用率
-    pub fn set_sample_rate_divider(&mut self, div: u8) -> Result<(), Error<I2c>> {
-        self.write_register(Register::SmpRtDiv, div)
+    // 设置采用率，单位HZ，范围[4..1000]
+    pub fn set_sample_rate(&mut self, rate: u16) -> Result<(), Error<I2c>> {
+        if rate < 4 || rate > 1000 {
+            return Err(Error::IllegalParameter);
+        }
+        self.write_register(Register::SmpRtDiv, (1000 / rate) as u8 - 1)
     }
 
-    // pub fn accel(&mut self) -> Result<Accel, Error<I2c>> {
-    //     let mut data = [0; 6];
-    //     self.read_registers(Register::AccelX_H, &mut data)?;
-    //     Ok(Accel::new(data))
-    // }
+    // 读取温度
+    pub fn temp(&mut self) -> Result<f32, Error<I2c>> {
+        Ok(self.accel_gyro()?.temp)
+    }
 
-    // pub fn gyro(&mut self) -> Result<Gyro, Error<I2c>> {
-    //     let mut data = [0; 6];
-    //     self.read_registers(Register::GyroX_H, &mut data)?;
-    //     Ok(Gyro::new(data))
-    // }
+    // 读取重力加速度
+    pub fn accel(&mut self) -> Result<Accel, Error<I2c>> {
+        Ok(self.accel_gyro()?.accel)
+    }
 
+    //读取角速度
+    pub fn gyro(&mut self) -> Result<Gyro, Error<I2c>> {
+        Ok(self.accel_gyro()?.gyro)
+    }
+
+    // 读取imu数据
     pub fn accel_gyro(&mut self) -> Result<ImuData, Error<I2c>> {
+        Ok(self
+            .raw_accel_gyro()?
+            .calibrate(&self.offset)
+            .to_imu_data(self.acc_range.range(), self.gyro_range.range()))
+    }
+
+    // 读取原始数据
+    pub fn raw_accel_gyro(&mut self) -> Result<RawData, Error<I2c>> {
         let mut data = [0; 14];
         self.read_registers(Register::AccelX_H, &mut data)?;
-        let raw = RawData::new(data);
-        self.mean_filter(&raw);
-        let mut imu_data = ImuData::default();
-
-        // 转为g
-        let g = 32768.0 / self.acc_range.range() as f32;
-        imu_data.accel.x = self.mean_imu_raw_data.ax as f32 / g;
-        imu_data.accel.y = self.mean_imu_raw_data.ay as f32 / g;
-        imu_data.accel.z = self.mean_imu_raw_data.az as f32 / g;
-
-        // 转成度每秒
-        let a = 32768.0 / self.gyro_range.range() as f32;
-        imu_data.gyro.x = self.mean_imu_raw_data.gx as f32 / a - self.gyro_offset.x;
-        imu_data.gyro.y = self.mean_imu_raw_data.gy as f32 / a - self.gyro_offset.y;
-        imu_data.gyro.z = self.mean_imu_raw_data.gz as f32 / a - self.gyro_offset.z;
-        imu_data.temp = 36.53 + self.mean_imu_raw_data.temp as f32 / 340.0;
-        Ok(imu_data)
+        Ok(RawData::new(data))
     }
 
-    //[0]-[9]为最近10次数据 [10]为10次数据的平均值
-    fn mean_filter(&mut self, raw: &RawData) {
-        const MEAN_FILTER_ROWS: usize = 6;
-        const MEAN_FILTER_COLS: usize = 8;
-
-        for row in 0..MEAN_FILTER_ROWS {
-            for col in 1..MEAN_FILTER_COLS {
-                self.mean_filter_fifo[row][col - 1] = self.mean_filter_fifo[row][col];
-            }
-        }
-
-        self.mean_filter_fifo[0][MEAN_FILTER_COLS - 1] = raw.ax;
-        self.mean_filter_fifo[1][MEAN_FILTER_COLS - 1] = raw.ay;
-        self.mean_filter_fifo[2][MEAN_FILTER_COLS - 1] = raw.az;
-        self.mean_filter_fifo[3][MEAN_FILTER_COLS - 1] = raw.gx;
-        self.mean_filter_fifo[4][MEAN_FILTER_COLS - 1] = raw.gy;
-        self.mean_filter_fifo[5][MEAN_FILTER_COLS - 1] = raw.gz;
-
-        for row in 0..MEAN_FILTER_ROWS {
-            let mut sum = 0i32;
-            for col in 0..MEAN_FILTER_COLS {
-                sum += self.mean_filter_fifo[row][col] as i32;
-            }
-            self.mean_filter_fifo[row][MEAN_FILTER_COLS] = (sum / MEAN_FILTER_COLS as i32) as i16;
-        }
-
-        self.mean_imu_raw_data.ax = self.mean_filter_fifo[0][MEAN_FILTER_COLS];
-        self.mean_imu_raw_data.ay = self.mean_filter_fifo[1][MEAN_FILTER_COLS];
-        self.mean_imu_raw_data.az = self.mean_filter_fifo[2][MEAN_FILTER_COLS];
-        self.mean_imu_raw_data.gx = self.mean_filter_fifo[3][MEAN_FILTER_COLS];
-        self.mean_imu_raw_data.gy = self.mean_filter_fifo[4][MEAN_FILTER_COLS];
-        self.mean_imu_raw_data.gz = self.mean_filter_fifo[5][MEAN_FILTER_COLS];
-    }
-
+    // 统计平均求偏移量
     pub fn cal_gyro_offset(&mut self) -> Result<(), Error<I2c>> {
-        const IMU_INIT_GYRO_THRESHOLD: f32 = 4.0;
-        const IMU_STATIC_GYRO_THRESHOLD: f32 = 5.0;
-        let mut gyro_sum = Gyro::default();
-        let mut count = 300;
-        loop {
-            let offset_data = self.accel_gyro()?;
-            if fabsf(offset_data.gyro.x) < IMU_INIT_GYRO_THRESHOLD
-                && fabsf(offset_data.gyro.y) < IMU_INIT_GYRO_THRESHOLD
-                && fabsf(offset_data.gyro.z) < IMU_INIT_GYRO_THRESHOLD
-            {
-                count -= 1;
-                gyro_sum.x += offset_data.gyro.x;
-                gyro_sum.y += offset_data.gyro.y;
-                gyro_sum.z += offset_data.gyro.z;
-                if count == 0 {
-                    break;
-                }
-                xtask::delay_us(10000);
-            }
+        let count = 300;
+        for _ in 0..count {
+            let raw = self.raw_accel_gyro()?;
+            self.offset.ax += raw.ax;
+            self.offset.ay += raw.ay;
+            self.offset.az += raw.az;
+            self.offset.gx += raw.gx;
+            self.offset.gy += raw.gy;
+            self.offset.gz += raw.gz;
+            xtask::delay_us(10000);
         }
-        let count = count as f32;
-        self.gyro_offset.x = gyro_sum.x / count;
-        self.gyro_offset.y = gyro_sum.y / count;
-        self.gyro_offset.z = gyro_sum.z / count;
+
+        self.offset.ax /= count;
+        self.offset.ay /= count;
+        self.offset.az /= count;
+        self.offset.az += 16384; //设芯片Z轴竖直向下，设定静态工作点。
+        self.offset.gx /= count;
+        self.offset.gy /= count;
+        self.offset.gz /= count;
+
         log::info!(
-            "IMU: calibrate offset seccess, gx: {} gy: {} gz: {}",
-            self.gyro_offset.x,
-            self.gyro_offset.y,
-            self.gyro_offset.z
+            "IMU: calibrate offset ax:{} ay:{} az:{} gx: {} gy: {} gz: {}",
+            self.offset.ax,
+            self.offset.ay,
+            self.offset.az,
+            self.offset.gx,
+            self.offset.gy,
+            self.offset.gz
         );
 
         Ok(())
@@ -272,6 +249,7 @@ where
     WriteError(<I2c as Write>::Error),
     WriteReadError(<I2c as WriteRead>::Error),
     WrongDevice,
+    IllegalParameter,
 }
 
 impl<I2c> core::fmt::Debug for Error<I2c>
@@ -285,6 +263,7 @@ where
             Error::WriteReadError(e) => f.debug_tuple("WriteReadError").field(e).finish(),
             Error::WriteError(e) => f.debug_tuple("WriteError").field(e).finish(),
             Error::WrongDevice => f.write_str("WrongDevice"),
+            Error::IllegalParameter => f.write_str("IllegalParameter"),
         }
     }
 }
@@ -298,12 +277,12 @@ pub enum GyroRange {
 }
 
 impl GyroRange {
-    pub fn range(self) -> u16 {
+    pub fn range(self) -> f32 {
         match self {
-            _250DEGS => 250,
-            _500DEGS => 500,
-            _1000DEGS => 1000,
-            _2000DEGS => 2000,
+            _250DEGS => 131.0,
+            _500DEGS => 65.5,
+            _1000DEGS => 32.8,
+            _2000DEGS => 16.4,
         }
     }
 }
@@ -317,12 +296,12 @@ pub enum AccelRange {
 }
 
 impl AccelRange {
-    pub fn range(self) -> u16 {
+    pub fn range(self) -> f32 {
         match self {
-            _2G => 2,
-            _4G => 4,
-            _8G => 6,
-            _16G => 16,
+            _2G => 16384.0 / 9.8,
+            _4G => 8192.0 / 9.8,
+            _8G => 4096.0 / 9.8,
+            _16G => 2048.0 / 9.8,
         }
     }
 }
@@ -333,17 +312,14 @@ pub enum DLPF {
     _184HZ = 0x01, // acc delay 2ms gyro 1.9ms
     _94HZ = 0x02,  // acc delay 3ms gyro 2.8ms
     _44HZ = 0x03,  // acc delay 4.9ms gyro 4.8ms
+    _20HZ = 0x04,
+    _10HZ = 0x05,
+    _5HZ = 0x06,
+    _Off = 0x07,
 }
 
-#[derive(Copy, Clone, Debug, Default)]
-pub struct EulerAngle {
-    pub yaw: f32,
-    pub pitch: f32,
-    pub roll: f32,
-}
-
-#[derive(Debug, Default)]
-struct RawData {
+#[derive(Debug, Default, Clone, Copy)]
+pub struct RawData {
     pub ax: i16,
     pub ay: i16,
     pub az: i16,
@@ -365,6 +341,32 @@ impl RawData {
             gz: i16::from_be_bytes([data[12], data[13]]),
         }
     }
+
+    pub(crate) fn calibrate(mut self, offset: &Self) -> Self {
+        self.ax -= offset.ax;
+        self.ay -= offset.ay;
+        self.az -= offset.az;
+        self.gx -= offset.gx;
+        self.gy -= offset.gy;
+        self.gz -= offset.gz;
+        self
+    }
+
+    pub(crate) fn to_imu_data(self, acc_range: f32, gyro_range: f32) -> ImuData {
+        ImuData {
+            accel: Accel {
+                x: self.ax as f32 / acc_range,
+                y: self.ay as f32 / acc_range,
+                z: self.az as f32 / acc_range,
+            },
+            temp: 36.53 + self.temp as f32 / 340.0,
+            gyro: Gyro {
+                x: self.gx as f32 / gyro_range,
+                y: self.gy as f32 / gyro_range,
+                z: self.gz as f32 / gyro_range,
+            },
+        }
+    }
 }
 
 #[derive(Debug, Default)]
@@ -374,18 +376,84 @@ pub struct ImuData {
     pub gyro: Gyro,
 }
 
-#[derive(Copy, Clone, Debug, Default)]
-pub struct Accel {
-    pub x: f32,
-    pub y: f32,
-    pub z: f32,
-}
+impl ImuData {
+    pub fn to_quat(self) -> Quaternion {
+        unsafe {
+            use libm::*;
+            #[allow(non_upper_case_globals)]
+            const Kp: f32 = 100.0; // 比例增益支配率收敛到加速度计/磁强计
+            #[allow(non_upper_case_globals)]
+            const Ki: f32 = 0.002; // 积分增益支配率的陀螺仪偏见的衔接
 
-#[derive(Copy, Clone, Debug, Default)]
-pub struct Gyro {
-    pub x: f32,
-    pub y: f32,
-    pub z: f32,
+            const HALF_T: f32 = 0.001; // 采样周期的一半
+            #[allow(non_upper_case_globals)]
+            static mut q0: f32 = 1.0; // 四元数的元素，代表估计方向
+            #[allow(non_upper_case_globals)]
+            static mut q1: f32 = 0.0;
+            #[allow(non_upper_case_globals)]
+            static mut q2: f32 = 0.0;
+            #[allow(non_upper_case_globals)]
+            static mut q3: f32 = 0.0;
+
+            // 按比例缩小积分误差
+            #[allow(non_upper_case_globals)]
+            static mut ex_int: f32 = 0.0;
+            #[allow(non_upper_case_globals)]
+            static mut ey_int: f32 = 0.0;
+            #[allow(non_upper_case_globals)]
+            static mut ez_int: f32 = 0.0;
+            let mut ax = self.accel.x;
+            let mut ay = self.accel.y;
+            let mut az = self.accel.z;
+            let mut gx = self.gyro.x;
+            let mut gy = self.gyro.y;
+            let mut gz = self.gyro.z;
+            // 测量正常化
+            let mut norm = sqrtf(ax * ax + ay * ay + az * az);
+            ax = ax / norm; //单位化
+            ay = ay / norm;
+            az = az / norm;
+
+            // 估计方向的重力
+            let vx = 2.0 * (q1 * q3 - q0 * q2);
+            let vy = 2.0 * (q0 * q1 + q2 * q3);
+            let vz = q0 * q0 - q1 * q1 - q2 * q2 + q3 * q3;
+
+            // 错误的领域和方向传感器测量参考方向之间的交叉乘积的总和
+            let ex = ay * vz - az * vy;
+            let ey = az * vx - ax * vz;
+            let ez = ax * vy - ay * vx;
+
+            // 积分误差比例积分增益
+            ex_int = ex_int + ex * Ki;
+            ey_int = ey_int + ey * Ki;
+            ez_int = ez_int + ez * Ki;
+
+            // 调整后的陀螺仪测量
+            gx = gx + Kp * ex + ex_int;
+            gy = gy + Kp * ey + ey_int;
+            gz = gz + Kp * ez + ez_int;
+
+            // 整合四元数率和正常化
+            q0 = q0 + (-q1 * gx - q2 * gy - q3 * gz) * HALF_T;
+            q1 = q1 + (q0 * gx + q2 * gz - q3 * gy) * HALF_T;
+            q2 = q2 + (q0 * gy - q1 * gz + q3 * gx) * HALF_T;
+            q3 = q3 + (q0 * gz + q1 * gy - q2 * gx) * HALF_T;
+
+            // 正常化四元
+            norm = sqrtf(q0 * q0 + q1 * q1 + q2 * q2 + q3 * q3);
+            q0 = q0 / norm;
+            q1 = q1 / norm;
+            q2 = q2 / norm;
+            q3 = q3 / norm;
+            Quaternion {
+                w: q0,
+                x: q1,
+                y: q2,
+                z: q3,
+            }
+        }
+    }
 }
 
 #[allow(non_camel_case_types)]

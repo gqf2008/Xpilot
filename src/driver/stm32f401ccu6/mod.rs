@@ -1,6 +1,6 @@
 pub mod led;
-//pub mod mpu6050;
-pub mod mpu6050_dmp;
+pub mod mpu6050;
+// pub mod mpu6050_dmp;
 
 use shared_bus::{BusManager, BusManagerSimple, NullMutex};
 use xtask::bsp::greenpill::hal::{
@@ -80,8 +80,8 @@ pub unsafe fn init() {
         if let Some(bus) = I2C1.as_ref() {
             let i2c1 = bus.acquire_i2c();
             //陀螺仪
-            //mpu6050::init(dp.TIM1, i2c1, &clocks);
-            mpu6050_dmp::init(dp.TIM1, i2c1, &clocks);
+            mpu6050::init(dp.TIM1, i2c1, &clocks);
+            //mpu6050_dmp::init(dp.TIM1, i2c1, &clocks);
         }
     }
 }

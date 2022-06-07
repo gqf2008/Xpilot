@@ -91,11 +91,11 @@ unsafe fn TIM1_UP_TIM10() {
             Ok(acc) => {
                 mbus::mbus().publish_isr(
                     "/imu",
-                    crate::message::Message::Acc {
+                    crate::message::Message::Accel(crate::driver::Accel {
                         x: acc.x() as f32 / 16384.0,
                         y: acc.y() as f32 / 16384.0,
                         z: acc.z() as f32 / 16384.0,
-                    },
+                    }),
                 );
             }
             Err(err) => {
@@ -106,11 +106,11 @@ unsafe fn TIM1_UP_TIM10() {
             Ok(gyro) => {
                 mbus::mbus().publish_isr(
                     "/imu",
-                    crate::message::Message::Gyro {
+                    crate::message::Message::Gyro(crate::driver::Gyro {
                         x: gyro.x() as f32 / 16.4 * 57.3,
                         y: gyro.y() as f32 / 16.4 * 57.3,
                         z: gyro.z() as f32 / 16.4 * 57.3,
-                    },
+                    }),
                 );
             }
             Err(err) => {
@@ -127,20 +127,20 @@ unsafe fn TIM1_UP_TIM10() {
                             let ypr = YawPitchRoll::from(quat);
                             mbus::mbus().publish_isr(
                                 "/imu",
-                                crate::message::Message::Quaternion {
+                                crate::message::Message::Quaternion(crate::driver::Quaternion {
                                     w: quat.w,
                                     x: quat.x,
                                     y: quat.y,
                                     z: quat.z,
-                                },
+                                }),
                             );
                             mbus::mbus().publish_isr(
                                 "/imu",
-                                crate::message::Message::YawPitchRoll {
+                                crate::message::Message::YawPitchRoll(crate::driver::EulerAngle {
                                     yaw: ypr.yaw,
                                     pitch: ypr.pitch,
                                     roll: ypr.roll,
-                                },
+                                }),
                             );
                         }
                         Err(err) => {
