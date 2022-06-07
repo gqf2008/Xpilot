@@ -1,6 +1,8 @@
 use crate::driver::{Accel, Gyro, ImuData};
+use bit_field::*;
 use core::fmt::Formatter;
 use embedded_hal::blocking::i2c::{Write, WriteRead};
+
 pub struct Mpu6050<I2c>
 where
     I2c: Write + WriteRead,
@@ -328,7 +330,7 @@ pub enum DLPF {
     _21_20HZ = 0b00000100,   //Fs=1kHZ
     _10_10HZ = 0b00000101,   //Fs=1kHZ
     _5_5HZ = 0b00000110,     //Fs=1kHZ
-                             //  _Off = 0b00000111,       //Fs=8kHZ
+                             //_Off = 0b00000111, //Fs=8kHZ
 }
 
 #[derive(Debug, Default, Clone, Copy)]
