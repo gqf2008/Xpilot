@@ -29,7 +29,7 @@ where
             address: 0x68,
             acc_range: AccelRange::_2G,
             gyro_range: GyroRange::_2000DEGS,
-            dlpf: DLPF::_94HZ,
+            dlpf: DLPF::_94_98HZ,
             interrupt: false,
             dmp: false,
             offset: Default::default(),
@@ -127,7 +127,10 @@ where
         self.write_register(Register::InterruptEnable, 0x01)
     }
 
-    // 设置采用率，单位HZ，范围[4..1000]
+    // 设置采样频率，单位HZ，范围[4..1000]
+    //采样频率=陀螺仪输出频率/(1 + SMPLRT_DIV)
+    //Sample Rate = Gyroscope Output Rate / (1 + SMPLRT_DIV)
+    //SMPLRT_DIV= Gyroscope Output Rate/Sample Rate -1
     pub fn set_sample_rate(&mut self, rate: u16) -> Result<(), Error<I2c>> {
         if rate < 4 || rate > 1000 {
             return Err(Error::IllegalParameter);
@@ -268,12 +271,16 @@ where
     }
 }
 
+//Register 27 – Gyroscope Configuration
+//Register(Hex) Register(Decimal) Bit7  Bit6  Bit5  Bit4   Bit3 Bit2 Bit1 Bit0
+//   1B              27           XG_ST YG_ST ZG_ST FS_SEL[1:0]   -   -    -
+
 #[derive(Copy, Clone, Debug)]
 pub enum GyroRange {
-    _250DEGS = 0x00,
-    _500DEGS = 0x08,
-    _1000DEGS = 0x10,
-    _2000DEGS = 0x18,
+    _250DEGS = 0b00000000,
+    _500DEGS = 0b00001000,
+    _1000DEGS = 0b00010000,
+    _2000DEGS = 0b00011000,
 }
 
 impl GyroRange {
@@ -287,12 +294,15 @@ impl GyroRange {
     }
 }
 
+//Register 28 – Accelerometer Configuration
+// Register(Hex) Register(Decimal) Bit7  Bit6  Bit5  Bit4    Bit3    Bit2 Bit1 Bit0
+//    1C                28         XA_ST YA_ST ZA_ST AFS_SEL[1:0]   -   -   -
 #[derive(Copy, Clone, Debug)]
 pub enum AccelRange {
-    _2G = 0x00,
-    _4G = 0x08,
-    _8G = 0x10,
-    _16G = 0x18,
+    _2G = 0b00000000,
+    _4G = 0b00001000,
+    _8G = 0b00010000,
+    _16G = 0b00011000,
 }
 
 impl AccelRange {
@@ -306,16 +316,19 @@ impl AccelRange {
     }
 }
 
+//Register 26 – Configuration
+//Register(Hex) Register(Decimal) Bit7 Bit6 Bit5  Bit4  Bit3  Bit2 Bit1 Bit0
+//     1A           26             -    -   EXT_SYNC_SET[2:0] DLPF_CFG[2:0]
 #[derive(Copy, Clone, Debug)]
 pub enum DLPF {
-    _260HZ = 0x00,
-    _184HZ = 0x01,
-    _94HZ = 0x02,
-    _44HZ = 0x03,
-    _20HZ = 0x04,
-    _10HZ = 0x05,
-    _5HZ = 0x06,
-    _Off = 0x07,
+    //_260_256HZ = 0b00000000, //Fs=8kHZ
+    _184_188HZ = 0b00000001, //Fs=1kHZ
+    _94_98HZ = 0b00000010,   //Fs=1kHZ
+    _44_42HZ = 0b00000011,   //Fs=1kHZ
+    _21_20HZ = 0b00000100,   //Fs=1kHZ
+    _10_10HZ = 0b00000101,   //Fs=1kHZ
+    _5_5HZ = 0b00000110,     //Fs=1kHZ
+                             //  _Off = 0b00000111,       //Fs=8kHZ
 }
 
 #[derive(Debug, Default, Clone, Copy)]
