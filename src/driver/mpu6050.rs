@@ -72,7 +72,7 @@ where
             self.set_interrupt_pin_high()?;
             self.enable_data_interrupt()?;
         }
-        self.set_sample_rate(100)?; //100hz
+        self.set_sample_rate(125)?; //125hz
         xtask::delay_us(100000);
         Ok(self)
     }
@@ -298,20 +298,20 @@ pub enum AccelRange {
 impl AccelRange {
     pub fn range(self) -> f32 {
         match self {
-            _2G => 16384.0 / 9.8,
-            _4G => 8192.0 / 9.8,
-            _8G => 4096.0 / 9.8,
-            _16G => 2048.0 / 9.8,
+            _2G => 16384.0,
+            _4G => 8192.0,
+            _8G => 4096.0,
+            _16G => 2048.0,
         }
     }
 }
 
 #[derive(Copy, Clone, Debug)]
 pub enum DLPF {
-    _260HZ = 0x00, // acc delay 0ms gyro 0.98ms
-    _184HZ = 0x01, // acc delay 2ms gyro 1.9ms
-    _94HZ = 0x02,  // acc delay 3ms gyro 2.8ms
-    _44HZ = 0x03,  // acc delay 4.9ms gyro 4.8ms
+    _260HZ = 0x00,
+    _184HZ = 0x01,
+    _94HZ = 0x02,
+    _44HZ = 0x03,
     _20HZ = 0x04,
     _10HZ = 0x05,
     _5HZ = 0x06,
@@ -353,6 +353,7 @@ impl RawData {
     }
 
     pub(crate) fn to_imu_data(self, acc_range: f32, gyro_range: f32) -> ImuData {
+        const PI_180: f32 = core::f32::consts::PI / 180.0;
         ImuData {
             accel: Accel {
                 x: self.ax as f32 / acc_range,
@@ -361,9 +362,9 @@ impl RawData {
             },
             temp: 36.53 + self.temp as f32 / 340.0,
             gyro: Gyro {
-                x: self.gx as f32 / gyro_range,
-                y: self.gy as f32 / gyro_range,
-                z: self.gz as f32 / gyro_range,
+                x: self.gx as f32 * PI_180 / gyro_range,
+                y: self.gy as f32 * PI_180 / gyro_range,
+                z: self.gz as f32 * PI_180 / gyro_range,
             },
             compass: Default::default(),
         }

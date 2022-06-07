@@ -4,6 +4,7 @@ mod gd32vf103;
 mod stm32f401ccu6;
 #[cfg(feature = "gd32vf103")]
 pub use gd32vf103::{bldc, led, mpu6050, serial, servo};
+use libm::acosf;
 #[cfg(feature = "stm32f4")]
 pub use stm32f401ccu6::led;
 
@@ -152,6 +153,21 @@ pub struct Accel {
     pub x: f32,
     pub y: f32,
     pub z: f32,
+}
+
+impl Accel {
+    // 角度
+    pub fn to_degree(self) -> (f32, f32, f32) {
+        (
+            acosf(self.x) * 57.29577,
+            acosf(self.y) * 57.29577,
+            acosf(self.z) * 57.29577,
+        )
+    }
+    // 弧度
+    pub fn to_radians(self) -> (f32, f32, f32) {
+        (acosf(self.x), acosf(self.y), acosf(self.z))
+    }
 }
 
 /// 角速度，单位rad/s
