@@ -26,6 +26,7 @@ fn sampling(recv: Queue<Message>) {
     let mut ypr_count = 0u64;
     let mut count_acc = 0u64;
     let mut count_gpro = 0u64;
+    let mut count_quat = 0u64;
     loop {
         if let Some(msg) = recv.pop_front() {
             match msg {
@@ -37,6 +38,15 @@ fn sampling(recv: Queue<Message>) {
                         log::info!("{:?}", data.to_quat().to_euler());
                     }
                     imu_count += 1;
+                }
+                Message::Quaternion(quat) => {
+                    if count_quat % 100 == 0 {
+                        mbus::mbus()
+                            .call("/led/red", Message::Control(Signal::Led(LedSignal::Toggle)));
+                        log::info!("{:?}", quat);
+                        log::info!("{:?}", quat.to_euler());
+                    }
+                    count_quat += 1;
                 }
                 Message::YawPitchRoll(EulerAngle { yaw, pitch, roll }) => {
                     if ypr_count % 100 == 0 {

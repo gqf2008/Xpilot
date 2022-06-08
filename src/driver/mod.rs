@@ -38,11 +38,11 @@ impl ImuData {
         unsafe {
             use libm::*;
             #[allow(non_upper_case_globals)]
-            const Kp: f32 = 100.0; // 比例增益支配率收敛到加速度计/磁强计
+            const Kp: f32 = 2.0; //100.0; // 比例增益支配率收敛到加速度计/磁强计
             #[allow(non_upper_case_globals)]
-            const Ki: f32 = 0.002; // 积分增益支配率的陀螺仪偏见的衔接
+            const Ki: f32 = 0.2; //0.002; // 积分增益支配率的陀螺仪偏见的衔接
 
-            const HALF_T: f32 = 0.005; // 采样周期的一半
+            const HALF_T: f32 = 0.05; // 采样周期的一半
             #[allow(non_upper_case_globals)]
             static mut q0: f32 = 1.0; // 四元数的元素，代表估计方向
             #[allow(non_upper_case_globals)]
