@@ -1,26 +1,28 @@
 #[cfg(feature = "gd32vf103")]
 mod gd32vf103;
-#[cfg(feature = "stm32f4")]
-mod stm32f401ccu6;
 #[cfg(feature = "gd32vf103")]
 pub use gd32vf103::{bldc, led, mpu6050, serial, servo};
-use libm::acosf;
-#[cfg(feature = "stm32f4")]
-pub use stm32f401ccu6::led;
+
+#[cfg(any(feature = "stm32f401ccu6", feature = "stm32f427vit6"))]
+mod stm32f4;
 
 pub mod bldc;
 pub mod mpu6050;
 pub mod servo;
 
+use libm::acosf;
+
 pub fn init() {
+    log::info!("Initialize driver");
     #[cfg(feature = "gd32vf103")]
     unsafe {
         gd32vf103::init()
     }
-    #[cfg(feature = "stm32f4")]
+    #[cfg(any(feature = "stm32f401ccu6", feature = "stm32f427vit6"))]
     unsafe {
-        stm32f401ccu6::init()
+        stm32f4::init()
     }
+    log::info!("Initialize driver ok");
 }
 
 #[derive(Copy, Clone, Debug, Default)]
@@ -40,7 +42,7 @@ impl ImuData {
             #[allow(non_upper_case_globals)]
             const Ki: f32 = 0.002; // 积分增益支配率的陀螺仪偏见的衔接
 
-            const HALF_T: f32 = 0.001; // 采样周期的一半
+            const HALF_T: f32 = 0.005; // 采样周期的一半
             #[allow(non_upper_case_globals)]
             static mut q0: f32 = 1.0; // 四元数的元素，代表估计方向
             #[allow(non_upper_case_globals)]
@@ -95,7 +97,7 @@ impl ImuData {
             q2 = q2 + (q0 * gy - q1 * gz + q3 * gx) * HALF_T;
             q3 = q3 + (q0 * gz + q1 * gy - q2 * gx) * HALF_T;
 
-            // 正常化四元
+            // 正常化四元，求平方根
             norm = sqrtf(q0 * q0 + q1 * q1 + q2 * q2 + q3 * q3);
             q0 = q0 / norm;
             q1 = q1 / norm;
@@ -122,20 +124,13 @@ pub struct Quaternion {
 impl Quaternion {
     pub fn to_euler(self) -> EulerAngle {
         use libm::*;
-        let q0 = self.w;
-        let q1 = self.x;
-        let q2 = self.y;
-        let q3 = self.z;
-        let yaw = atan2f(
-            2.0 * (q1 * q2 + q0 * q3),
-            q0 * q0 + q1 * q1 - q2 * q2 - q3 * q3,
-        ) * 57.3;
-
-        let pitch = asinf(-2.0 * q1 * q3 + 2.0 * q0 * q2) * 57.3;
-        let roll = atan2f(
-            2.0 * q2 * q3 + 2.0 * q0 * q1,
-            -2.0 * q1 * q1 - 2.0 * q2 * q2 + 1.0,
-        ) * 57.3;
+        let w = self.w;
+        let x = self.x;
+        let y = self.y;
+        let z = self.z;
+        let yaw = atan2f(2.0 * (x * y + w * z), 1.0 - 2.0 * (y * y + z * z)) * 57.29577;
+        let pitch = asinf(2.0 * w * y - 2.0 * x * z) * 57.29577;
+        let roll = atan2f(2.0 * (y * z + w * x), 1.0 - 2.0 * (x * x + y * y)) * 57.29577;
         EulerAngle { yaw, pitch, roll }
     }
 }

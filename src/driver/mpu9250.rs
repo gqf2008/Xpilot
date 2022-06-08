@@ -17,7 +17,6 @@ where
     interrupt: bool,
     dmp: bool,
     offset: RawData,
-    sample_rate: u16,
 }
 
 impl<I2c> Mpu6050<I2c>
@@ -36,7 +35,6 @@ where
             interrupt: false,
             dmp: false,
             offset: Default::default(),
-            sample_rate: 125,
         }
     }
     pub fn with_address(mut self, address: u8) -> Self {
@@ -65,19 +63,7 @@ where
         self
     }
 
-    pub fn with_sample_rate(mut self, rate: u16) -> Self {
-        self.sample_rate = rate;
-        self
-    }
-
     pub fn build(mut self) -> Result<Self, Error<I2c>> {
-        log::info!(
-            "Address: 0x{:02X} dlpf: {:?} acc_range: {:?} gyro_range: {:?} sample_rate :125Hz",
-            self.address,
-            self.dlpf,
-            self.acc_range,
-            self.gyro_range,
-        );
         self.who_am_i()?;
         self.reset()?;
         self.disable_sleep()?;
@@ -88,7 +74,7 @@ where
             self.set_interrupt_pin_high()?;
             self.enable_data_interrupt()?;
         }
-        self.set_sample_rate(self.sample_rate)?; //125hz
+        self.set_sample_rate(125)?; //125hz
         xtask::delay_us(100000);
         Ok(self)
     }
@@ -181,8 +167,7 @@ where
     pub fn raw_accel_gyro(&mut self) -> Result<RawData, Error<I2c>> {
         let mut data = [0; 14];
         self.read_registers(Register::AccelX_H, &mut data)?;
-        let data = RawData::new(data);
-        Ok(data)
+        Ok(RawData::new(data))
     }
 
     // 统计平均求偏移量
@@ -202,8 +187,7 @@ where
         self.offset.ax /= count;
         self.offset.ay /= count;
         self.offset.az /= count;
-        // self.offset.az += 16384; //设芯片Z轴竖直向下，设定静态工作点。
-        self.offset.az /= count; //设芯片Z轴竖直向下，设定静态工作点。
+        self.offset.az += 16384; //设芯片Z轴竖直向下，设定静态工作点。
         self.offset.gx /= count;
         self.offset.gy /= count;
         self.offset.gz /= count;

@@ -1,7 +1,8 @@
+use crate::mbus;
+use crate::message::*;
 use crate::{
     driver::{self, Accel, EulerAngle, Gyro},
     mbus::mbus,
-    message::Message,
 };
 use xtask::{isr_sprintln, Queue, TaskBuilder};
 
@@ -21,35 +22,52 @@ pub fn start() {
 }
 
 fn sampling(recv: Queue<Message>) {
-    let mut count = 0u64;
+    let mut imu_count = 0u64;
+    let mut ypr_count = 0u64;
     let mut count_acc = 0u64;
     let mut count_gpro = 0u64;
     loop {
         if let Some(msg) = recv.pop_front() {
             match msg {
+                Message::ImuData(data) => {
+                    if imu_count % 100 == 0 {
+                        mbus::mbus()
+                            .call("/led/red", Message::Control(Signal::Led(LedSignal::Toggle)));
+                        log::info!("{:?}", data);
+                        log::info!("{:?}", data.to_quat().to_euler());
+                    }
+                    imu_count += 1;
+                }
                 Message::YawPitchRoll(EulerAngle { yaw, pitch, roll }) => {
-                    if count % 100 == 0 {
-                        if let Some(led) = driver::led::blue() {
-                            led.toggle();
-                        }
+                    if ypr_count % 100 == 0 {
+                        mbus::mbus()
+                            .call("/led/red", Message::Control(Signal::Led(LedSignal::Toggle)));
                         log::info!(" yaw:{:.5?}, pitch:{:.5?}, roll:{:.5?}", yaw, pitch, roll);
                     }
-                    count += 1;
+                    ypr_count += 1;
                 }
-                Message::Accel(Accel { x, y, z }) => {
+                Message::Accel(accel) => {
                     if count_acc % 100 == 0 {
-                        if let Some(led) = driver::led::blue() {
-                            led.toggle();
-                        }
-                        log::info!(" acc_x:{:.5?}, acc_y:{:.5?}, acc_z:{:.5?}", x, y, z);
+                        mbus::mbus().call(
+                            "/led/green",
+                            Message::Control(Signal::Led(LedSignal::Toggle)),
+                        );
+                        log::info!(
+                            " acc_x:{:.5?}, acc_y:{:.5?}, acc_z:{:.5?}",
+                            accel.x,
+                            accel.y,
+                            accel.z
+                        );
+                        log::info!("acc_angel {:?}", accel.to_degree());
                     }
                     count_acc += 1;
                 }
                 Message::Gyro(Gyro { x, y, z }) => {
                     if count_gpro % 100 == 0 {
-                        if let Some(led) = driver::led::blue() {
-                            led.toggle();
-                        }
+                        mbus::mbus().call(
+                            "/led/blue",
+                            Message::Control(Signal::Led(LedSignal::Toggle)),
+                        );
                         log::info!(" gyro_x:{:.5?}, gyro_y:{:.5?}, gyro_z:{:.5?}", x, y, z);
                     }
                     count_gpro += 1;
