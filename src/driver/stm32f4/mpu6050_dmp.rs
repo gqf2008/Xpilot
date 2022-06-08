@@ -3,6 +3,7 @@ use mpu6050_dmp::{
     address::Address, quaternion::Quaternion, sensor::Mpu6050, yaw_pitch_roll::YawPitchRoll,
 };
 use shared_bus::{I2cProxy, NullMutex};
+use xtask::bsp::greenpill::hal::pac::I2C2;
 use xtask::bsp::greenpill::hal::timer::CounterHz;
 use xtask::time::Delay;
 use xtask::{
@@ -10,7 +11,7 @@ use xtask::{
     bsp::greenpill::hal::{
         gpio::{Alternate, OpenDrain, Pin},
         i2c::I2c,
-        pac::{interrupt, Interrupt, I2C1, TIM1},
+        pac::{interrupt, Interrupt, TIM1},
         prelude::*,
         rcc::Clocks,
         timer::{Event, Timer1},
@@ -22,10 +23,10 @@ pub type MPU = Mpu6050<
         'static,
         NullMutex<
             I2c<
-                I2C1,
+                I2C2,
                 (
-                    Pin<'B', 8, Alternate<4, OpenDrain>>,
-                    Pin<'B', 9, Alternate<4, OpenDrain>>,
+                    Pin<'B', 10, Alternate<4, OpenDrain>>,
+                    Pin<'B', 11, Alternate<4, OpenDrain>>,
                 ),
             >,
         >,
@@ -41,10 +42,10 @@ pub(crate) unsafe fn init(
         'static,
         NullMutex<
             I2c<
-                I2C1,
+                I2C2,
                 (
-                    Pin<'B', 8, Alternate<4, OpenDrain>>,
-                    Pin<'B', 9, Alternate<4, OpenDrain>>,
+                    Pin<'B', 10, Alternate<4, OpenDrain>>,
+                    Pin<'B', 11, Alternate<4, OpenDrain>>,
                 ),
             >,
         >,
@@ -104,12 +105,13 @@ unsafe fn TIM1_UP_TIM10() {
         }
         match mpu.gyro() {
             Ok(gyro) => {
+                const PI_180: f32 = core::f32::consts::PI / 180.0;
                 mbus::mbus().publish_isr(
                     "/imu",
                     crate::message::Message::Gyro(crate::driver::Gyro {
-                        x: gyro.x() as f32 / 16.4 * 57.3,
-                        y: gyro.y() as f32 / 16.4 * 57.3,
-                        z: gyro.z() as f32 / 16.4 * 57.3,
+                        x: gyro.x() as f32 * PI_180 / 16.4,
+                        y: gyro.y() as f32 * PI_180 / 16.4,
+                        z: gyro.z() as f32 * PI_180 / 16.4,
                     }),
                 );
             }
@@ -123,25 +125,31 @@ unsafe fn TIM1_UP_TIM10() {
                     let mut buf = [0; 28];
                     match mpu.read_fifo(&mut buf) {
                         Ok(buf) => {
-                            let quat = Quaternion::from_bytes(&buf[..16]).unwrap();
-                            let ypr = YawPitchRoll::from(quat);
-                            mbus::mbus().publish_isr(
-                                "/imu",
-                                crate::message::Message::Quaternion(crate::driver::Quaternion {
-                                    w: quat.w,
-                                    x: quat.x,
-                                    y: quat.y,
-                                    z: quat.z,
-                                }),
-                            );
-                            mbus::mbus().publish_isr(
-                                "/imu",
-                                crate::message::Message::YawPitchRoll(crate::driver::EulerAngle {
-                                    yaw: ypr.yaw,
-                                    pitch: ypr.pitch,
-                                    roll: ypr.roll,
-                                }),
-                            );
+                            if let Some(quat) = Quaternion::from_bytes(&buf[..16]) {
+                                let quat = quat.normalize();
+                                let ypr = YawPitchRoll::from(quat);
+                                mbus::mbus().publish_isr(
+                                    "/imu",
+                                    crate::message::Message::Quaternion(
+                                        crate::driver::Quaternion {
+                                            w: quat.w,
+                                            x: quat.x,
+                                            y: quat.y,
+                                            z: quat.z,
+                                        },
+                                    ),
+                                );
+                                mbus::mbus().publish_isr(
+                                    "/imu",
+                                    crate::message::Message::YawPitchRoll(
+                                        crate::driver::EulerAngle {
+                                            yaw: ypr.yaw * 57.29577,
+                                            pitch: ypr.pitch * 57.29577,
+                                            roll: ypr.roll * 57.29577,
+                                        },
+                                    ),
+                                );
+                            }
                         }
                         Err(err) => {
                             log::error!("mpu6050 error {:?}", err);

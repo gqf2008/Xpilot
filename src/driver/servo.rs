@@ -1,5 +1,7 @@
 //! 舵机驱动
 
+use crate::mbus;
+use crate::message::*;
 use embedded_hal::PwmPin;
 
 pub struct Servo<PWM> {
@@ -33,8 +35,9 @@ impl<PWM: PwmPin<Duty = u16>> Servo<PWM> {
     pub fn set_duty(&mut self, duty: f32) {
         self.pwm
             .set_duty((self.pwm.get_max_duty() as f32 * duty) as u16);
-        if let Some(green) = super::led::blue() {
-            green.toggle();
-        }
+        mbus::mbus().call(
+            "/led/green",
+            Message::Control(Signal::Led(LedSignal::Toggle)),
+        );
     }
 }

@@ -1,4 +1,6 @@
-use crate::driver::{Accel, Barometer, Compass, Distance, EulerAngle, Gps, Gyro, Quaternion};
+use crate::driver::{
+    Accel, Barometer, Compass, Distance, EulerAngle, Gps, Gyro, ImuData, Quaternion,
+};
 
 #[derive(Debug, Clone, Copy)]
 pub enum Message {
@@ -6,6 +8,7 @@ pub enum Message {
     // 欧拉角
     YawPitchRoll(EulerAngle),
 
+    ImuData(ImuData),
     // 角度
     Gyro(Gyro),
     // 角加速度
@@ -23,7 +26,14 @@ pub enum Message {
 
 #[derive(Debug, Clone, Copy)]
 pub enum Signal {
-    Led {},
+    Led(LedSignal),
     Motor {},
     Servo {},
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum LedSignal {
+    On,
+    Off,
+    Toggle,
 }
