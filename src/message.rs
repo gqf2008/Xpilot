@@ -5,8 +5,6 @@ use crate::driver::{
 #[derive(Debug, Clone, Copy)]
 pub enum Message {
     Quaternion(Quaternion),
-    // 欧拉角
-    YawPitchRoll(EulerAngle),
 
     ImuData(ImuData),
     // 角度

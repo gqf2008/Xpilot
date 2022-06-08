@@ -152,37 +152,37 @@ unsafe fn TIM1_UP_TIM10() {
         timer.clear_interrupt(Event::Update);
     }
     if let Some(mpu) = MPU.as_mut() {
-        match mpu.accel() {
-            Ok(acc) => {
-                mbus::mbus().publish_isr(
-                    "/imu",
-                    crate::message::Message::Accel(crate::driver::Accel {
-                        x: acc.x() as f32 / 16384.0,
-                        y: acc.y() as f32 / 16384.0,
-                        z: acc.z() as f32 / 16384.0,
-                    }),
-                );
-            }
-            Err(err) => {
-                log::error!("mpu6050 error {:?}", err);
-            }
-        }
-        match mpu.gyro() {
-            Ok(gyro) => {
-                const PI_180: f32 = core::f32::consts::PI / 180.0;
-                mbus::mbus().publish_isr(
-                    "/imu",
-                    crate::message::Message::Gyro(crate::driver::Gyro {
-                        x: gyro.x() as f32 * PI_180 / 16.4,
-                        y: gyro.y() as f32 * PI_180 / 16.4,
-                        z: gyro.z() as f32 * PI_180 / 16.4,
-                    }),
-                );
-            }
-            Err(err) => {
-                log::error!("mpu6050 error {:?}", err);
-            }
-        }
+        // match mpu.accel() {
+        //     Ok(acc) => {
+        //         mbus::mbus().publish_isr(
+        //             "/imu",
+        //             crate::message::Message::Accel(crate::driver::Accel {
+        //                 x: acc.x() as f32 / 16384.0,
+        //                 y: acc.y() as f32 / 16384.0,
+        //                 z: acc.z() as f32 / 16384.0,
+        //             }),
+        //         );
+        //     }
+        //     Err(err) => {
+        //         log::error!("mpu6050 error {:?}", err);
+        //     }
+        // }
+        // match mpu.gyro() {
+        //     Ok(gyro) => {
+        //         const PI_180: f32 = core::f32::consts::PI / 180.0;
+        //         mbus::mbus().publish_isr(
+        //             "/imu",
+        //             crate::message::Message::Gyro(crate::driver::Gyro {
+        //                 x: gyro.x() as f32 * PI_180 / 16.4,
+        //                 y: gyro.y() as f32 * PI_180 / 16.4,
+        //                 z: gyro.z() as f32 * PI_180 / 16.4,
+        //             }),
+        //         );
+        //     }
+        //     Err(err) => {
+        //         log::error!("mpu6050 error {:?}", err);
+        //     }
+        // }
         match mpu.get_fifo_count() {
             Ok(len) => {
                 if len >= 28 {
@@ -191,7 +191,6 @@ unsafe fn TIM1_UP_TIM10() {
                         Ok(buf) => {
                             if let Some(quat) = Quaternion::from_bytes(&buf[..16]) {
                                 let quat = quat.normalize();
-                                let ypr = YawPitchRoll::from(quat);
                                 mbus::mbus().publish_isr(
                                     "/imu",
                                     crate::message::Message::Quaternion(
@@ -200,16 +199,6 @@ unsafe fn TIM1_UP_TIM10() {
                                             x: quat.x,
                                             y: quat.y,
                                             z: quat.z,
-                                        },
-                                    ),
-                                );
-                                mbus::mbus().publish_isr(
-                                    "/imu",
-                                    crate::message::Message::YawPitchRoll(
-                                        crate::driver::EulerAngle {
-                                            yaw: ypr.yaw * 57.29577,
-                                            pitch: ypr.pitch * 57.29577,
-                                            roll: ypr.roll * 57.29577,
                                         },
                                     ),
                                 );
