@@ -8,12 +8,13 @@ use shared_bus::{BusManager, BusManagerSimple, NullMutex};
 use xtask::bsp::greenpill::hal::{
     gpio::{Alternate, OpenDrain, Pin},
     i2c::I2c,
-    pac,
     pac::I2C2,
+    pac::{self, I2C1},
     prelude::*,
 };
 use xtask::bsp::greenpill::stdout;
 
+#[cfg(feature = "stm32f427vit6")]
 pub type I2CBUS = BusManager<
     NullMutex<
         I2c<
@@ -26,7 +27,19 @@ pub type I2CBUS = BusManager<
     >,
 >;
 
-static mut I2C2: Option<I2CBUS> = None;
+#[cfg(feature = "stm32f401ccu6")]
+pub type I2CBUS = BusManager<
+    NullMutex<
+        I2c<
+            I2C1,
+            (
+                Pin<'B', 8, Alternate<4, OpenDrain>>,
+                Pin<'B', 9, Alternate<4, OpenDrain>>,
+            ),
+        >,
+    >,
+>;
+static mut I2C: Option<I2CBUS> = None;
 
 pub unsafe fn init() {
     if let Some(dp) = pac::Peripherals::take() {
@@ -46,7 +59,9 @@ pub unsafe fn init() {
                 panic!("{:?}", err);
             }
         }
-
+        #[cfg(feature = "stm32f401ccu6")]
+        led::init_401(gpioc.pc13);
+        #[cfg(feature = "stm32f427vit6")]
         led::init_427(gpioc.pc6, gpioc.pc7, gpioa.pa8);
         let channels = (
             gpioa.pa0.into_alternate(),
@@ -65,29 +80,60 @@ pub unsafe fn init() {
         let servo2 = super::servo::Servo::new(ch3);
         let servo3 = super::servo::Servo::new(ch4);
         //todo 锁尾舵机/尾旋翼
+        #[cfg(feature = "stm32f401ccu6")]
+        {
+            let scl = gpiob
+                .pb8
+                .into_alternate()
+                .internal_pull_up(true)
+                .set_open_drain();
+            let sda = gpiob
+                .pb9
+                .into_alternate()
+                .internal_pull_up(true)
+                .set_open_drain();
+            I2C.replace(BusManagerSimple::new(dp.I2C1.i2c(
+                (scl, sda),
+                400.kHz(),
+                &clocks,
+            )));
+        }
 
-        let scl = gpiob
-            .pb10
-            .into_alternate()
-            .internal_pull_up(true)
-            .set_open_drain();
-        let sda = gpiob
-            .pb11
-            .into_alternate()
-            .internal_pull_up(true)
-            .set_open_drain();
-        I2C2.replace(BusManagerSimple::new(dp.I2C2.i2c(
-            (scl, sda),
-            400.kHz(),
-            &clocks,
-        )));
-        if let Some(bus) = I2C2.as_ref() {
+        #[cfg(feature = "stm32f427vit6")]
+        {
+            let scl = gpiob
+                .pb10
+                .into_alternate()
+                .internal_pull_up(true)
+                .set_open_drain();
+            let sda = gpiob
+                .pb11
+                .into_alternate()
+                .internal_pull_up(true)
+                .set_open_drain();
+            I2C.replace(BusManagerSimple::new(dp.I2C2.i2c(
+                (scl, sda),
+                400.kHz(),
+                &clocks,
+            )));
+        }
+        if let Some(bus) = I2C.as_ref() {
             let i2c = bus.acquire_i2c();
             //陀螺仪
             #[cfg(not(feature = "dmp"))]
-            mpu6050::init(dp.TIM1, i2c, &clocks);
+            {
+                #[cfg(feature = "stm32f401ccu6")]
+                mpu6050::init_401(dp.TIM1, i2c, &clocks);
+                #[cfg(feature = "stm32f427vit6")]
+                mpu6050::init_427(dp.TIM1, i2c, &clocks);
+            }
             #[cfg(feature = "dmp")]
-            mpu6050_dmp::init(dp.TIM1, i2c, &clocks);
+            {
+                #[cfg(feature = "stm32f401ccu6")]
+                mpu6050_dmp::init_401(dp.TIM1, i2c, &clocks);
+                #[cfg(feature = "stm32f427vit6")]
+                mpu6050_dmp::init_427(dp.TIM1, i2c, &clocks);
+            }
         }
     }
 }

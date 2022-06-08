@@ -16,7 +16,24 @@ pub unsafe fn init_401(pin: Pin<'C', 13>) {
     let led = Led::new(pin);
     LED.replace(led);
     log::info!("init led ok");
-    mbus::mbus().register_serivce("/led/blue", |_, msg| {});
+    mbus::mbus().register_serivce("/led/blue", |_, msg| match msg {
+        Message::Control(Signal::Led(LedSignal::On)) => {
+            if let Some(red) = LED.as_mut() {
+                red.on();
+            }
+        }
+        Message::Control(Signal::Led(LedSignal::Off)) => {
+            if let Some(red) = LED.as_mut() {
+                red.off();
+            }
+        }
+        Message::Control(Signal::Led(LedSignal::Toggle)) => {
+            if let Some(red) = LED.as_mut() {
+                red.toggle();
+            }
+        }
+        _ => {}
+    });
 }
 
 pub unsafe fn init_427(red: Pin<'C', 6>, green: Pin<'C', 7>, blue: Pin<'A', 8>) {

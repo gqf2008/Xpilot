@@ -24,37 +24,37 @@ unsafe fn init() {
         }
         let start_addr = &_sheap as *const u8 as usize;
         let size = 32 * 1024;
+        xtask::init(start_addr, size);
         log::info!(
             "Initialize heap, start_addr:0x{:02X} size: {}",
             start_addr,
             size
         );
-        xtask::init(start_addr, size);
     }
     #[cfg(feature = "stm32f401ccu6")]
     {
         let start_addr = rt::heap_start() as usize;
         let size = 60 * 1024;
+        //4k留给主栈
+        xtask::init(start_addr, size);
         log::info!(
             "Initialize heap, start_addr:0x{:02X} size: {}",
             start_addr,
             size
         );
-        //4k留给主栈
-        xtask::init(start_addr, size);
     }
 
     #[cfg(feature = "stm32f427vit6")]
     {
         let start_addr = rt::heap_start() as usize;
         let size = 184 * 1024;
+        //8k留给主栈
+        xtask::init(start_addr, size);
         log::info!(
             "Initialize heap, start_addr:0x{:02X} size: {}",
             start_addr,
             size
         );
-        //8k留给主栈
-        xtask::init(start_addr, size);
     }
     driver::init();
 }

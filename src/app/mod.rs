@@ -1,5 +1,3 @@
-use crate::driver;
-
 mod imu;
 
 pub fn start() {

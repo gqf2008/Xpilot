@@ -3,6 +3,9 @@ use mpu6050_dmp::{
     address::Address, quaternion::Quaternion, sensor::Mpu6050, yaw_pitch_roll::YawPitchRoll,
 };
 use shared_bus::{I2cProxy, NullMutex};
+#[cfg(feature = "stm32f401ccu6")]
+use xtask::bsp::greenpill::hal::pac::I2C1;
+#[cfg(feature = "stm32f427vit6")]
 use xtask::bsp::greenpill::hal::pac::I2C2;
 use xtask::bsp::greenpill::hal::timer::CounterHz;
 use xtask::time::Delay;
@@ -18,6 +21,23 @@ use xtask::{
     },
 };
 
+#[cfg(feature = "stm32f401ccu6")]
+pub type MPU = Mpu6050<
+    I2cProxy<
+        'static,
+        NullMutex<
+            I2c<
+                I2C1,
+                (
+                    Pin<'B', 8, Alternate<4, OpenDrain>>,
+                    Pin<'B', 9, Alternate<4, OpenDrain>>,
+                ),
+            >,
+        >,
+    >,
+>;
+
+#[cfg(feature = "stm32f27vit6")]
 pub type MPU = Mpu6050<
     I2cProxy<
         'static,
@@ -36,7 +56,51 @@ pub type MPU = Mpu6050<
 static mut MPU: Option<MPU> = None;
 static mut TIMER: Option<CounterHz<TIM1>> = None;
 
-pub(crate) unsafe fn init(
+#[cfg(feature = "stm32f401ccu6")]
+pub(crate) unsafe fn init_401(
+    tim: TIM1,
+    i2c: I2cProxy<
+        'static,
+        NullMutex<
+            I2c<
+                I2C1,
+                (
+                    Pin<'B', 8, Alternate<4, OpenDrain>>,
+                    Pin<'B', 9, Alternate<4, OpenDrain>>,
+                ),
+            >,
+        >,
+    >,
+    clocks: &Clocks,
+) {
+    log::info!("init mpu6050_dmp");
+
+    let mut delay = Delay::new();
+    match Mpu6050::new(i2c, Address::default()) {
+        Ok(mut mpu) => match mpu.initialize_dmp(&mut delay) {
+            Ok(_) => {
+                mpu.calibrate_accel(150, &mut delay).ok();
+                mpu.calibrate_gyro(150, &mut delay).ok();
+                MPU.replace(mpu);
+                let mut timer = Timer1::new(tim, clocks).counter_hz();
+                timer.start(100.Hz()).ok();
+                timer.listen(Event::Update);
+                TIMER.replace(timer);
+                NVIC::unmask(Interrupt::TIM1_UP_TIM10);
+                log::info!("init mpu6050_dmp ok");
+            }
+            Err(err) => {
+                log::error!("mpu6050 dmp init dmp error {:?}", err);
+            }
+        },
+        Err(err) => {
+            log::error!("mpu6050 dmp init error {:?}", err);
+        }
+    }
+}
+
+#[cfg(feature = "stm32f427vit6")]
+pub(crate) unsafe fn init_427(
     tim: TIM1,
     i2c: I2cProxy<
         'static,

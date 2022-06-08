@@ -1,7 +1,7 @@
 use crate::mbus;
 use crate::message::*;
 use crate::{
-    driver::{self, Accel, EulerAngle, Gyro},
+    driver::{EulerAngle, Gyro},
     mbus::mbus,
 };
 use xtask::{isr_sprintln, Queue, TaskBuilder};
@@ -31,16 +31,15 @@ fn sampling(recv: Queue<Message>) {
         if let Some(msg) = recv.pop_front() {
             match msg {
                 Message::ImuData(data) => {
-                    if imu_count % 100 == 0 {
+                    if imu_count % 500 == 0 {
                         mbus::mbus()
                             .call("/led/red", Message::Control(Signal::Led(LedSignal::Toggle)));
                         log::info!("{:?}", data);
-                        log::info!("{:?}", data.to_quat().to_euler());
                     }
                     imu_count += 1;
                 }
                 Message::Quaternion(quat) => {
-                    if count_quat % 100 == 0 {
+                    if count_quat % 500 == 0 {
                         mbus::mbus()
                             .call("/led/red", Message::Control(Signal::Led(LedSignal::Toggle)));
                         log::info!("{:?}", quat);
@@ -49,7 +48,7 @@ fn sampling(recv: Queue<Message>) {
                     count_quat += 1;
                 }
                 Message::YawPitchRoll(EulerAngle { yaw, pitch, roll }) => {
-                    if ypr_count % 100 == 0 {
+                    if ypr_count % 500 == 0 {
                         mbus::mbus()
                             .call("/led/red", Message::Control(Signal::Led(LedSignal::Toggle)));
                         log::info!(" yaw:{:.5?}, pitch:{:.5?}, roll:{:.5?}", yaw, pitch, roll);
@@ -57,7 +56,7 @@ fn sampling(recv: Queue<Message>) {
                     ypr_count += 1;
                 }
                 Message::Accel(accel) => {
-                    if count_acc % 100 == 0 {
+                    if count_acc % 500 == 0 {
                         mbus::mbus().call(
                             "/led/green",
                             Message::Control(Signal::Led(LedSignal::Toggle)),
@@ -73,7 +72,7 @@ fn sampling(recv: Queue<Message>) {
                     count_acc += 1;
                 }
                 Message::Gyro(Gyro { x, y, z }) => {
-                    if count_gpro % 100 == 0 {
+                    if count_gpro % 500 == 0 {
                         mbus::mbus().call(
                             "/led/blue",
                             Message::Control(Signal::Led(LedSignal::Toggle)),
