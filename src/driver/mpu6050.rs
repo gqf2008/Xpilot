@@ -71,11 +71,12 @@ where
 
     pub fn build(mut self) -> Result<Self, Error<I2c>> {
         log::info!(
-            "Address: 0x{:02X} dlpf: {:?} acc_range: {:?} gyro_range: {:?} sample_rate :125Hz",
+            "Address: 0x{:02X} dlpf: {:?} acc_range: {:?} gyro_range: {:?} sample_rate :{}Hz",
             self.address,
             self.dlpf,
             self.acc_range,
             self.gyro_range,
+            self.sample_rate,
         );
         self.who_am_i()?;
         self.reset()?;

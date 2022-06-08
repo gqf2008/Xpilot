@@ -37,8 +37,8 @@ fn sampling(recv: Queue<Message>) {
                 }
                 Message::Quaternion(quat) => {
                     if count_quat % 100 == 0 {
-                        mbus::mbus()
-                            .call("/led/red", Message::Control(Signal::Led(LedSignal::Toggle)));
+                        // mbus::mbus()
+                        //     .call("/led/red", Message::Control(Signal::Led(LedSignal::Toggle)));
                         log::info!("{:?}", quat);
                         log::info!("{:?}", quat.to_euler());
                     }
