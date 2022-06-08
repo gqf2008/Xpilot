@@ -11,11 +11,48 @@ static mut RED: Option<Led427<Pin<'C', 6, Output>>> = None;
 static mut GREEN: Option<Led427<Pin<'C', 7, Output>>> = None;
 static mut BLUE: Option<Led427<Pin<'A', 8, Output>>> = None;
 
+#[cfg(feature = "stm32f401ccu6")]
 pub unsafe fn init_401(pin: Pin<'C', 13>) {
     log::info!("init led");
     let led = Led::new(pin);
     LED.replace(led);
     log::info!("init led ok");
+    mbus::mbus().register_serivce("/led/red", |_, msg| match msg {
+        Message::Control(Signal::Led(LedSignal::On)) => {
+            if let Some(red) = LED.as_mut() {
+                red.on();
+            }
+        }
+        Message::Control(Signal::Led(LedSignal::Off)) => {
+            if let Some(red) = LED.as_mut() {
+                red.off();
+            }
+        }
+        Message::Control(Signal::Led(LedSignal::Toggle)) => {
+            if let Some(red) = LED.as_mut() {
+                red.toggle();
+            }
+        }
+        _ => {}
+    });
+    mbus::mbus().register_serivce("/led/green", |_, msg| match msg {
+        Message::Control(Signal::Led(LedSignal::On)) => {
+            if let Some(red) = LED.as_mut() {
+                red.on();
+            }
+        }
+        Message::Control(Signal::Led(LedSignal::Off)) => {
+            if let Some(red) = LED.as_mut() {
+                red.off();
+            }
+        }
+        Message::Control(Signal::Led(LedSignal::Toggle)) => {
+            if let Some(red) = LED.as_mut() {
+                red.toggle();
+            }
+        }
+        _ => {}
+    });
     mbus::mbus().register_serivce("/led/blue", |_, msg| match msg {
         Message::Control(Signal::Led(LedSignal::On)) => {
             if let Some(red) = LED.as_mut() {
@@ -36,6 +73,7 @@ pub unsafe fn init_401(pin: Pin<'C', 13>) {
     });
 }
 
+#[cfg(feature = "stm32f427vit6")]
 pub unsafe fn init_427(red: Pin<'C', 6>, green: Pin<'C', 7>, blue: Pin<'A', 8>) {
     log::info!("init led");
     let led = Led427::new(red.into_push_pull_output());
