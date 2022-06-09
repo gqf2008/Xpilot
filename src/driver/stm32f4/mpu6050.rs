@@ -133,15 +133,6 @@ unsafe fn TIM1_UP_TIM10() {
             match mpu.accel_gyro() {
                 Ok(mut data) => {
                     mpu.update_quaternion(&mut data);
-                    if let Some(accel) = data.accel {
-                        mbus::mbus().publish_isr("/imu", crate::message::Message::Accel(accel));
-                    }
-                    if let Some(gyro) = data.gyro {
-                        mbus::mbus().publish_isr("/imu", crate::message::Message::Gyro(gyro));
-                    }
-                    if let Some(quat) = data.quaternion {
-                        mbus::mbus().publish_isr("/imu", crate::message::Message::Quaternion(quat));
-                    }
                     mbus::mbus().publish_isr("/imu", crate::message::Message::ImuData(data));
                 }
 

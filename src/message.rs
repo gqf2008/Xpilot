@@ -4,8 +4,6 @@ use crate::driver::{
 
 #[derive(Debug, Clone, Copy)]
 pub enum Message {
-    Quaternion(Quaternion),
-
     ImuData(ImuData),
     // 角度
     Gyro(Gyro),

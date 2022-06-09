@@ -1,3 +1,4 @@
+use crate::driver::ImuData;
 use crate::mbus;
 use mpu6050_dmp::{
     address::Address, quaternion::Quaternion, sensor::Mpu6050, yaw_pitch_roll::YawPitchRoll,
@@ -37,7 +38,7 @@ pub type MPU = Mpu6050<
     >,
 >;
 
-#[cfg(feature = "stm32f27vit6")]
+#[cfg(feature = "stm32f427vit6")]
 pub type MPU = Mpu6050<
     I2cProxy<
         'static,
@@ -193,14 +194,14 @@ unsafe fn TIM1_UP_TIM10() {
                                 let quat = quat.normalize();
                                 mbus::mbus().publish_isr(
                                     "/imu",
-                                    crate::message::Message::Quaternion(
+                                    crate::message::Message::ImuData(ImuData::default().quate(
                                         crate::driver::Quaternion {
                                             w: quat.w,
                                             x: quat.x,
                                             y: quat.y,
                                             z: quat.z,
                                         },
-                                    ),
+                                    )),
                                 );
                             }
                         }

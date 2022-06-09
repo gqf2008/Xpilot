@@ -35,12 +35,35 @@ pub struct ImuData {
     pub quaternion: Option<Quaternion>,
 }
 
+impl ImuData {
+    pub fn quate(mut self, quat: Quaternion) -> Self {
+        self.quaternion = Some(quat);
+        self
+    }
+    pub fn accel(mut self, accel: Accel) -> Self {
+        self.accel = Some(accel);
+        self
+    }
+    pub fn gyro(mut self, gyro: Gyro) -> Self {
+        self.gyro = Some(gyro);
+        self
+    }
+    pub fn compass(mut self, compass: Compass) -> Self {
+        self.compass = Some(compass);
+        self
+    }
+    pub fn temp(mut self, temp: f32) -> Self {
+        self.temp = Some(temp);
+        self
+    }
+}
+
 #[derive(Copy, Clone, Debug, Default)]
 pub struct Quaternion {
-    w: f32,
-    x: f32,
-    y: f32,
-    z: f32,
+    pub w: f32,
+    pub x: f32,
+    pub y: f32,
+    pub z: f32,
 }
 
 impl Quaternion {
@@ -50,18 +73,35 @@ impl Quaternion {
         let x = self.x;
         let y = self.y;
         let z = self.z;
-        let yaw = atan2f(2.0 * (x * y + w * z), 1.0 - 2.0 * (y * y + z * z)) * 57.29577;
-        let pitch = -asinf(2.0 * w * y - 2.0 * x * z) * 57.29577;
-        let roll = atan2f(2.0 * (y * z + w * x), 1.0 - 2.0 * (x * x + y * y)) * 57.29577;
+        let yaw = atan2f(2.0 * (x * y + w * z), 1.0 - 2.0 * (y * y + z * z)); //* 57.29577;
+        let pitch = asinf(2.0 * w * y - 2.0 * x * z); // * 57.29577;
+        let roll = atan2f(2.0 * (y * z + w * x), 1.0 - 2.0 * (x * x + y * y)); // * 57.29577;
         EulerAngle { yaw, pitch, roll }
     }
 }
 
+/// 弧度单位
 #[derive(Copy, Clone, Debug, Default)]
 pub struct EulerAngle {
     pub yaw: f32,
     pub pitch: f32,
     pub roll: f32,
+}
+
+impl EulerAngle {
+    pub fn to_degree(mut self) -> EulerAngle {
+        self.yaw *= 57.29577;
+        self.pitch *= 57.29577;
+        self.roll *= 57.29577;
+        self
+    }
+    // 加速计计算弧度
+    pub fn to_radians(mut self) -> EulerAngle {
+        self.yaw /= 57.29577;
+        self.pitch /= 57.29577;
+        self.roll /= 57.29577;
+        self
+    }
 }
 
 /// 重力加速度，单位g
@@ -110,7 +150,7 @@ pub struct Barometer {
 }
 
 #[derive(Copy, Clone, Debug, Default)]
-pub struct Distance(f32);
+pub struct Distance(pub f32);
 
 #[derive(Copy, Clone, Debug, Default)]
 pub struct Gps {

@@ -1,10 +1,7 @@
 use crate::mbus;
+use crate::mbus::mbus;
 use crate::message::*;
-use crate::{
-    driver::{EulerAngle, Gyro},
-    mbus::mbus,
-};
-use xtask::{isr_sprintln, Queue, TaskBuilder};
+use xtask::{Queue, TaskBuilder};
 
 pub fn start() {
     let q = Queue::new();
@@ -16,33 +13,26 @@ pub fn start() {
         .spawn(move || sampling(q));
     mbus().subscribe("/imu", move |_, msg| {
         if let Err(err) = sender.push_back_isr(msg) {
-            isr_sprintln!("error {:?}", err);
+            log::error!("error {:?}", err);
         }
     });
 }
 
 fn sampling(recv: Queue<Message>) {
     let mut imu_count = 0u64;
-    let mut count_quat = 0u64;
     loop {
         if let Some(msg) = recv.pop_front() {
             match msg {
                 Message::ImuData(data) => {
-                    if imu_count % 1000 == 0 {
+                    if imu_count % 100 == 0 {
                         mbus::mbus()
                             .call("/led/red", Message::Control(Signal::Led(LedSignal::Toggle)));
                         log::info!("{:?}", data);
+                        if let Some(quat) = data.quaternion {
+                            log::info!("{:?}", quat.to_euler().to_degree());
+                        }
                     }
                     imu_count += 1;
-                }
-                Message::Quaternion(quat) => {
-                    if count_quat % 1000 == 0 {
-                        // mbus::mbus()
-                        //     .call("/led/red", Message::Control(Signal::Led(LedSignal::Toggle)));
-                        log::info!("{:?}", quat);
-                        log::info!("{:?}", quat.to_euler());
-                    }
-                    count_quat += 1;
                 }
 
                 _ => {}
