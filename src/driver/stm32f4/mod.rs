@@ -8,10 +8,15 @@ use shared_bus::{BusManager, BusManagerSimple, NullMutex};
 use xtask::bsp::greenpill::hal::{
     gpio::{Alternate, OpenDrain, Pin},
     i2c::I2c,
-    pac::I2C2,
-    pac::{self, I2C1},
+    pac,
     prelude::*,
 };
+
+#[cfg(feature = "stm32f401ccu6")]
+use xtask::bsp::greenpill::hal::pac::I2C1;
+#[cfg(feature = "stm32f427vit6")]
+use xtask::bsp::greenpill::hal::pac::I2C2;
+
 use xtask::bsp::greenpill::stdout;
 
 #[cfg(feature = "stm32f427vit6")]
@@ -42,9 +47,19 @@ pub type I2CBUS = BusManager<
 static mut I2C: Option<I2CBUS> = None;
 
 pub unsafe fn init() {
+    use xtask::chip::CPU_CLOCK_HZ;
+    use xtask::chip::SYSTICK_CLOCK_HZ;
+    use xtask::chip::TICK_CLOCK_HZ;
+    log::info!("CPU_CLOCK {}Hz", CPU_CLOCK_HZ);
+    log::info!("SYSTICK_CLOCK {}Hz", SYSTICK_CLOCK_HZ);
+    log::info!("TICK_CLOCK {}Hz", TICK_CLOCK_HZ);
     if let Some(dp) = pac::Peripherals::take() {
         let rcc = dp.RCC.constrain();
-        let clocks = rcc.cfgr.freeze();
+        let clocks = rcc
+            .cfgr
+            .hclk((CPU_CLOCK_HZ as u32).Hz())
+            .sysclk((SYSTICK_CLOCK_HZ as u32).Hz())
+            .freeze();
         let gpioa = dp.GPIOA.split();
         let gpiob = dp.GPIOB.split();
         let gpioc = dp.GPIOC.split();

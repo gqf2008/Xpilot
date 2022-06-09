@@ -71,7 +71,7 @@ where
 
     pub fn build(mut self) -> Result<Self, Error<I2c>> {
         log::info!(
-            "Address: 0x{:02X} dlpf: {:?} acc_range: {:?} gyro_range: {:?} sample_rate :{}Hz",
+            "Address: 0x{:02X} dlpf: {:?} acc_range: {:?} gyro_range: {:?} sample_rate: {}Hz",
             self.address,
             self.dlpf,
             self.acc_range,
@@ -88,7 +88,7 @@ where
             self.set_interrupt_pin_high()?;
             self.enable_data_interrupt()?;
         }
-        self.set_sample_rate(self.sample_rate)?; //125hz
+        self.set_sample_rate(self.sample_rate)?;
         xtask::delay_us(100000);
         Ok(self)
     }
@@ -156,17 +156,17 @@ where
 
     // 读取温度
     pub fn temp(&mut self) -> Result<f32, Error<I2c>> {
-        Ok(self.accel_gyro()?.temp)
+        Ok(self.accel_gyro()?.temp.unwrap_or_default())
     }
 
     // 读取重力加速度
     pub fn accel(&mut self) -> Result<Accel, Error<I2c>> {
-        Ok(self.accel_gyro()?.accel)
+        Ok(self.accel_gyro()?.accel.unwrap_or_default())
     }
 
     //读取角速度
     pub fn gyro(&mut self) -> Result<Gyro, Error<I2c>> {
-        Ok(self.accel_gyro()?.gyro)
+        Ok(self.accel_gyro()?.gyro.unwrap_or_default())
     }
 
     // 读取imu数据
@@ -187,6 +187,7 @@ where
 
     // 统计平均求偏移量
     pub fn cal_gyro_offset(&mut self) -> Result<(), Error<I2c>> {
+        log::debug!("IMU: calibrate offset");
         let count = 300;
         for _ in 0..count {
             let raw = self.raw_accel_gyro()?;
@@ -203,7 +204,7 @@ where
         self.offset.ay /= count;
         self.offset.az /= count;
         // self.offset.az += 16384; //设芯片Z轴竖直向下，设定静态工作点。
-        self.offset.az /= count; //设芯片Z轴竖直向下，设定静态工作点。
+        self.offset.az /= count;
         self.offset.gx /= count;
         self.offset.gy /= count;
         self.offset.gz /= count;
@@ -225,11 +226,11 @@ where
         unsafe {
             use libm::*;
             #[allow(non_upper_case_globals)]
-            const Kp: f32 = 1.0; //100.0; // 比例增益支配率收敛到加速度计/磁强计
+            const Kp: f32 = 1.0; // 比例增益支配率收敛到加速度计/磁强计
             #[allow(non_upper_case_globals)]
             const Ki: f32 = 0.01; //0.002; // 积分增益支配率的陀螺仪偏见的衔接
 
-            const HALF_T: f32 = 0.005; // 采样周期的一半
+            const HALF_T: f32 = 0.0005; // 采样周期的一半
             #[allow(non_upper_case_globals)]
             static mut q0: f32 = 1.0; // 四元数的元素，代表估计方向
             #[allow(non_upper_case_globals)]
@@ -246,12 +247,36 @@ where
             static mut ey_int: f32 = 0.0;
             #[allow(non_upper_case_globals)]
             static mut ez_int: f32 = 0.0;
-            let mut ax = imu.accel.x;
-            let mut ay = imu.accel.y;
-            let mut az = imu.accel.z;
-            let mut gx = imu.gyro.x;
-            let mut gy = imu.gyro.y;
-            let mut gz = imu.gyro.z;
+            let mut ax = if let Some(accel) = imu.accel {
+                accel.x
+            } else {
+                0.0
+            };
+            let mut ay = if let Some(accel) = imu.accel {
+                accel.y
+            } else {
+                0.0
+            };
+            let mut az = if let Some(accel) = imu.accel {
+                accel.z
+            } else {
+                0.0
+            };
+            let mut gx = if let Some(gyro) = imu.gyro {
+                gyro.x
+            } else {
+                0.0
+            };
+            let mut gy = if let Some(gyro) = imu.gyro {
+                gyro.y
+            } else {
+                0.0
+            };
+            let mut gz = if let Some(gyro) = imu.gyro {
+                gyro.z
+            } else {
+                0.0
+            };
             // 测量正常化
             let mut norm = sqrtf(ax * ax + ay * ay + az * az);
             ax = ax / norm; //单位化
@@ -464,19 +489,19 @@ impl RawData {
     pub(crate) fn to_imu_data(self, acc_range: f32, gyro_range: f32) -> ImuData {
         const PI_180: f32 = core::f32::consts::PI / 180.0;
         ImuData {
-            accel: Accel {
+            accel: Some(Accel {
                 x: self.ax as f32 / acc_range,
                 y: self.ay as f32 / acc_range,
                 z: self.az as f32 / acc_range,
-            },
-            temp: 36.53 + self.temp as f32 / 340.0,
-            gyro: Gyro {
+            }),
+            temp: Some(36.53 + self.temp as f32 / 340.0),
+            gyro: Some(Gyro {
                 x: self.gx as f32 * PI_180 / gyro_range,
                 y: self.gy as f32 * PI_180 / gyro_range,
                 z: self.gz as f32 * PI_180 / gyro_range,
-            },
+            }),
             compass: Default::default(),
-            quaternion: None,
+            quaternion: Default::default(),
         }
     }
 }

@@ -1,6 +1,7 @@
-mod imu;
-
+mod controller;
+mod station_anotc;
 pub fn start() {
     //driver::bldc::motor().unlock();
-    imu::start();
+    controller::start();
+    station_anotc::start();
 }

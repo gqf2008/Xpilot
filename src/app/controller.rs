@@ -10,7 +10,7 @@ pub fn start() {
     let q = Queue::new();
     let sender = q.clone();
     TaskBuilder::new()
-        .name("pid")
+        .name("controller")
         .priority(1)
         .stack_size(1024)
         .spawn(move || sampling(q));
@@ -28,7 +28,7 @@ fn sampling(recv: Queue<Message>) {
         if let Some(msg) = recv.pop_front() {
             match msg {
                 Message::ImuData(data) => {
-                    if imu_count % 100 == 0 {
+                    if imu_count % 1000 == 0 {
                         mbus::mbus()
                             .call("/led/red", Message::Control(Signal::Led(LedSignal::Toggle)));
                         log::info!("{:?}", data);
@@ -36,7 +36,7 @@ fn sampling(recv: Queue<Message>) {
                     imu_count += 1;
                 }
                 Message::Quaternion(quat) => {
-                    if count_quat % 100 == 0 {
+                    if count_quat % 1000 == 0 {
                         // mbus::mbus()
                         //     .call("/led/red", Message::Control(Signal::Led(LedSignal::Toggle)));
                         log::info!("{:?}", quat);

@@ -8,6 +8,8 @@ mod driver;
 mod mbus;
 mod message;
 
+#[macro_use]
+extern crate bitflags;
 extern crate alloc;
 
 #[cfg(any(feature = "stm32f401ccu6", feature = "stm32f427vit6"))]
@@ -47,7 +49,7 @@ unsafe fn init() {
     #[cfg(feature = "stm32f427vit6")]
     {
         let start_addr = rt::heap_start() as usize;
-        let size = 184 * 1024;
+        let size = 196 * 1024;
         //8k留给主栈
         xtask::init(start_addr, size);
         log::info!(
@@ -56,7 +58,6 @@ unsafe fn init() {
             size
         );
     }
-    driver::init();
 }
 
 #[rt::entry]
@@ -64,9 +65,11 @@ fn main() -> ! {
     unsafe {
         init();
     }
+    driver::init();
     log::info!("Start xpilot application");
     // 启动应用
     app::start();
+
     //启动调度器
     xtask::start()
 }

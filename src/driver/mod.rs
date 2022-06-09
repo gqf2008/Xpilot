@@ -7,6 +7,7 @@ pub use gd32vf103::{bldc, led, mpu6050, serial, servo};
 mod stm32f4;
 
 pub mod bldc;
+pub mod icm20602;
 pub mod mpu6050;
 pub mod servo;
 
@@ -27,10 +28,10 @@ pub fn init() {
 
 #[derive(Copy, Clone, Debug, Default)]
 pub struct ImuData {
-    pub accel: Accel,
-    pub temp: f32,
-    pub gyro: Gyro,
-    pub compass: Compass,
+    pub accel: Option<Accel>,
+    pub temp: Option<f32>,
+    pub gyro: Option<Gyro>,
+    pub compass: Option<Compass>,
     pub quaternion: Option<Quaternion>,
 }
 
@@ -72,7 +73,7 @@ pub struct Accel {
 }
 
 impl Accel {
-    // 角度
+    // 加速计计算角度
     pub fn to_degree(self) -> (f32, f32, f32) {
         (
             acosf(self.x) * 57.29577,
@@ -80,7 +81,7 @@ impl Accel {
             acosf(self.z) * 57.29577,
         )
     }
-    // 弧度
+    // 加速计计算弧度
     pub fn to_radians(self) -> (f32, f32, f32) {
         (acosf(self.x), acosf(self.y), acosf(self.z))
     }
@@ -102,7 +103,7 @@ pub struct Compass {
     pub z: f32,
 }
 
-//气压计
+/// 气压计
 #[derive(Copy, Clone, Debug, Default)]
 pub struct Barometer {
     pub h: f32,
