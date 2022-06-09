@@ -2,6 +2,7 @@ use crate::driver::{Accel, Gyro, ImuData, Quaternion};
 use core::fmt::Formatter;
 use embedded_hal::blocking::i2c::{Write, WriteRead};
 
+pub const SAMPLE_RATE: u16 = 200;
 pub struct Mpu6050<I2c>
 where
     I2c: Write + WriteRead,
@@ -31,11 +32,11 @@ where
             address: 0x68,
             acc_range: AccelRange::_2G,
             gyro_range: GyroRange::_2000DEGS,
-            dlpf: DLPF::_94_98HZ,
+            dlpf: DLPF::_5_5HZ,
             interrupt: false,
             dmp: false,
             offset: Default::default(),
-            sample_rate: 125,
+            sample_rate: SAMPLE_RATE,
         }
     }
     pub fn with_address(mut self, address: u8) -> Self {
@@ -64,10 +65,10 @@ where
         self
     }
 
-    pub fn with_sample_rate(mut self, rate: u16) -> Self {
-        self.sample_rate = rate;
-        self
-    }
+    // pub fn with_sample_rate(mut self, rate: u16) -> Self {
+    //     self.sample_rate = rate;
+    //     self
+    // }
 
     pub fn build(mut self) -> Result<Self, Error<I2c>> {
         log::info!(
@@ -230,7 +231,7 @@ where
             #[allow(non_upper_case_globals)]
             const Ki: f32 = 0.01; //0.002; // 积分增益支配率的陀螺仪偏见的衔接
 
-            const HALF_T: f32 = 0.0005; // 采样周期的一半
+            const HALF_T: f32 = 1.0 / SAMPLE_RATE as f32 / 2.0; // 采样周期的一半
             #[allow(non_upper_case_globals)]
             static mut q0: f32 = 1.0; // 四元数的元素，代表估计方向
             #[allow(non_upper_case_globals)]

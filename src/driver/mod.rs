@@ -74,7 +74,7 @@ impl Quaternion {
         let y = self.y;
         let z = self.z;
         let yaw = atan2f(2.0 * (x * y + w * z), 1.0 - 2.0 * (y * y + z * z)); //* 57.29577;
-        let pitch = asinf(2.0 * w * y - 2.0 * x * z); // * 57.29577;
+        let pitch = -asinf(2.0 * w * y - 2.0 * x * z); // * 57.29577;
         let roll = atan2f(2.0 * (y * z + w * x), 1.0 - 2.0 * (x * x + y * y)); // * 57.29577;
         EulerAngle { yaw, pitch, roll }
     }
