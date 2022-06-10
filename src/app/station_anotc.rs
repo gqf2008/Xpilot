@@ -52,22 +52,18 @@ fn sync() {
             match msg {
                 Message::ImuData(data) => {
                     if imu_count % 10 == 0 {
-                        // if let Some(accel) = data.accel {
-                        //     if let Some(gyro) = data.gyro {
-                        //         send_accel_gyro(accel, gyro);
-                        //     }
-                        // }
                         if let Some(quat) = data.quaternion {
                             send_quat(quat);
                             send_euler(quat.euler_angles());
                         }
                     }
-                    if imu_count % 10 == 0 {
+                    if imu_count % 100 == 0 {
                         mbus::mbus().call(
                             "/led/blue",
                             Message::Control(Signal::Led(LedSignal::Toggle)),
                         );
                     }
+
                     imu_count += 1;
                 }
 

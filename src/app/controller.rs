@@ -27,9 +27,7 @@ fn sampling(recv: Queue<Message>) {
                     if imu_count % 1000 == 0 {
                         mbus::mbus()
                             .call("/led/red", Message::Control(Signal::Led(LedSignal::Toggle)));
-                        if let Some(quat) = data.quaternion {
-                            log::info!("{:?}\n{:?}", quat, quat.angle());
-                        }
+                        log::info!("{:?}", data);
                     }
                     imu_count += 1;
                 }
