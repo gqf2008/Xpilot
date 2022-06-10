@@ -16,7 +16,6 @@ use xtask::arch::cortex_m::rt;
 #[cfg(feature = "gd32vf103")]
 use xtask::arch::riscv::rt;
 
-/// 初始化外设驱动
 unsafe fn init() {
     #[cfg(feature = "gd32vf103")]
     {
