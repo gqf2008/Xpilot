@@ -3,7 +3,7 @@ pub mod led;
 pub mod mpu6050;
 #[cfg(feature = "dmp")]
 pub mod mpu6050_dmp;
-
+pub mod mpu9250;
 use shared_bus::{BusManager, BusManagerSimple, NullMutex};
 use xtask::bsp::greenpill::hal::{
     gpio::{Alternate, OpenDrain, Pin},
@@ -134,6 +134,7 @@ pub unsafe fn init() {
         }
         if let Some(bus) = I2C.as_ref() {
             let i2c = bus.acquire_i2c();
+
             //陀螺仪
             #[cfg(not(feature = "dmp"))]
             {

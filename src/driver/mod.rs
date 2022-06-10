@@ -11,7 +11,8 @@ pub mod icm20602;
 pub mod mpu6050;
 pub mod servo;
 
-use libm::acosf;
+use nalgebra::UnitQuaternion;
+use nalgebra::Vector3;
 
 pub fn init() {
     log::info!("Initialize driver");
@@ -32,11 +33,11 @@ pub struct ImuData {
     pub temp: Option<f32>,
     pub gyro: Option<Gyro>,
     pub compass: Option<Compass>,
-    pub quaternion: Option<Quaternion>,
+    pub quaternion: Option<UnitQuaternion<f32>>,
 }
 
 impl ImuData {
-    pub fn quate(mut self, quat: Quaternion) -> Self {
+    pub fn quate(mut self, quat: UnitQuaternion<f32>) -> Self {
         self.quaternion = Some(quat);
         self
     }
@@ -58,90 +59,15 @@ impl ImuData {
     }
 }
 
-#[derive(Copy, Clone, Debug, Default)]
-pub struct Quaternion {
-    pub w: f32,
-    pub x: f32,
-    pub y: f32,
-    pub z: f32,
-}
-
-impl Quaternion {
-    pub fn to_euler(self) -> EulerAngle {
-        use libm::*;
-        let w = self.w;
-        let x = self.x;
-        let y = self.y;
-        let z = self.z;
-        let yaw = atan2f(2.0 * (x * y + w * z), 1.0 - 2.0 * (y * y + z * z)); //* 57.29577;
-        let pitch = -asinf(2.0 * w * y - 2.0 * x * z); // * 57.29577;
-        let roll = atan2f(2.0 * (y * z + w * x), 1.0 - 2.0 * (x * x + y * y)); // * 57.29577;
-        EulerAngle { yaw, pitch, roll }
-    }
-}
-
-/// 弧度单位
-#[derive(Copy, Clone, Debug, Default)]
-pub struct EulerAngle {
-    pub yaw: f32,
-    pub pitch: f32,
-    pub roll: f32,
-}
-
-impl EulerAngle {
-    pub fn to_degree(mut self) -> EulerAngle {
-        self.yaw *= 57.29577;
-        self.pitch *= 57.29577;
-        self.roll *= 57.29577;
-        self
-    }
-    // 加速计计算弧度
-    pub fn to_radians(mut self) -> EulerAngle {
-        self.yaw /= 57.29577;
-        self.pitch /= 57.29577;
-        self.roll /= 57.29577;
-        self
-    }
-}
+/// 四元数
+pub type Quaternion = UnitQuaternion<f32>;
 
 /// 重力加速度，单位g
-#[derive(Copy, Clone, Debug, Default)]
-pub struct Accel {
-    pub x: f32,
-    pub y: f32,
-    pub z: f32,
-}
-
-impl Accel {
-    // 加速计计算角度
-    pub fn to_degree(self) -> (f32, f32, f32) {
-        (
-            acosf(self.x) * 57.29577,
-            acosf(self.y) * 57.29577,
-            acosf(self.z) * 57.29577,
-        )
-    }
-    // 加速计计算弧度
-    pub fn to_radians(self) -> (f32, f32, f32) {
-        (acosf(self.x), acosf(self.y), acosf(self.z))
-    }
-}
-
+pub type Accel = Vector3<f32>;
 /// 角速度，单位rad/s
-#[derive(Copy, Clone, Debug, Default)]
-pub struct Gyro {
-    pub x: f32,
-    pub y: f32,
-    pub z: f32,
-}
-
+pub type Gyro = Vector3<f32>;
 /// 罗盘
-#[derive(Copy, Clone, Debug, Default)]
-pub struct Compass {
-    pub x: f32,
-    pub y: f32,
-    pub z: f32,
-}
+pub type Compass = Vector3<f32>;
 
 /// 气压计
 #[derive(Copy, Clone, Debug, Default)]

@@ -1,6 +1,4 @@
-use crate::driver::{
-    Accel, Barometer, Compass, Distance, EulerAngle, Gps, Gyro, ImuData, Quaternion,
-};
+use crate::driver::{Accel, Barometer, Compass, Distance, Gps, Gyro, ImuData};
 
 #[derive(Debug, Clone, Copy)]
 pub enum Message {

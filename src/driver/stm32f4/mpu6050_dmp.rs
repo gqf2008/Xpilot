@@ -123,8 +123,8 @@ pub(crate) unsafe fn init_427(
     match Mpu6050::new(i2c, Address::default()) {
         Ok(mut mpu) => match mpu.initialize_dmp(&mut delay) {
             Ok(_) => {
-                mpu.calibrate_accel(150, &mut delay).ok();
-                mpu.calibrate_gyro(150, &mut delay).ok();
+                // mpu.calibrate_accel(150, &mut delay).ok();
+                // mpu.calibrate_gyro(150, &mut delay).ok();
                 MPU.replace(mpu);
                 let mut timer = Timer1::new(tim, clocks).counter_hz();
                 timer.start(100.Hz()).ok();

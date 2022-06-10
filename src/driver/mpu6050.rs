@@ -1,8 +1,7 @@
-use crate::driver::{Accel, Gyro, ImuData, Quaternion};
+use crate::driver::{Accel, Gyro, ImuData};
 use core::fmt::Formatter;
 use embedded_hal::blocking::i2c::{Write, WriteRead};
 
-pub const SAMPLE_RATE: u16 = 200;
 pub struct Mpu6050<I2c>
 where
     I2c: Write + WriteRead,
@@ -15,8 +14,6 @@ where
     gyro_range: GyroRange,
     dlpf: DLPF,
     interrupt: bool,
-    dmp: bool,
-    offset: RawData,
     sample_rate: u16,
 }
 
@@ -34,9 +31,7 @@ where
             gyro_range: GyroRange::_2000DEGS,
             dlpf: DLPF::_5_5HZ,
             interrupt: false,
-            dmp: false,
-            offset: Default::default(),
-            sample_rate: SAMPLE_RATE,
+            sample_rate: 125,
         }
     }
     pub fn with_address(mut self, address: u8) -> Self {
@@ -60,15 +55,10 @@ where
         self
     }
 
-    pub fn with_dmp(mut self) -> Self {
-        self.dmp = true;
+    pub fn with_sample_rate(mut self, rate: u16) -> Self {
+        self.sample_rate = rate;
         self
     }
-
-    // pub fn with_sample_rate(mut self, rate: u16) -> Self {
-    //     self.sample_rate = rate;
-    //     self
-    // }
 
     pub fn build(mut self) -> Result<Self, Error<I2c>> {
         log::info!(
@@ -174,7 +164,6 @@ where
     pub fn accel_gyro(&mut self) -> Result<ImuData, Error<I2c>> {
         Ok(self
             .raw_accel_gyro()?
-            .calibrate(&self.offset)
             .to_imu_data(self.acc_range.range(), self.gyro_range.range()))
     }
 
@@ -184,145 +173,6 @@ where
         self.read_registers(Register::AccelX_H, &mut data)?;
         let data = RawData::new(data);
         Ok(data)
-    }
-
-    // 统计平均求偏移量
-    pub fn cal_gyro_offset(&mut self) -> Result<(), Error<I2c>> {
-        log::debug!("IMU: calibrate offset");
-        let count = 300;
-        for _ in 0..count {
-            let raw = self.raw_accel_gyro()?;
-            self.offset.ax += raw.ax;
-            self.offset.ay += raw.ay;
-            self.offset.az += raw.az;
-            self.offset.gx += raw.gx;
-            self.offset.gy += raw.gy;
-            self.offset.gz += raw.gz;
-            xtask::delay_us(10000);
-        }
-
-        self.offset.ax /= count;
-        self.offset.ay /= count;
-        self.offset.az /= count;
-        // self.offset.az += 16384; //设芯片Z轴竖直向下，设定静态工作点。
-        self.offset.az /= count;
-        self.offset.gx /= count;
-        self.offset.gy /= count;
-        self.offset.gz /= count;
-
-        log::info!(
-            "IMU: calibrate offset ax:{} ay:{} az:{} gx: {} gy: {} gz: {}",
-            self.offset.ax,
-            self.offset.ay,
-            self.offset.az,
-            self.offset.gx,
-            self.offset.gy,
-            self.offset.gz
-        );
-
-        Ok(())
-    }
-
-    pub fn update_quaternion(&self, imu: &mut ImuData) {
-        unsafe {
-            use libm::*;
-            #[allow(non_upper_case_globals)]
-            const Kp: f32 = 1.0; // 比例增益支配率收敛到加速度计/磁强计
-            #[allow(non_upper_case_globals)]
-            const Ki: f32 = 0.01; //0.002; // 积分增益支配率的陀螺仪偏见的衔接
-
-            const HALF_T: f32 = 1.0 / SAMPLE_RATE as f32 / 2.0; // 采样周期的一半
-            #[allow(non_upper_case_globals)]
-            static mut q0: f32 = 1.0; // 四元数的元素，代表估计方向
-            #[allow(non_upper_case_globals)]
-            static mut q1: f32 = 0.0;
-            #[allow(non_upper_case_globals)]
-            static mut q2: f32 = 0.0;
-            #[allow(non_upper_case_globals)]
-            static mut q3: f32 = 0.0;
-
-            // 按比例缩小积分误差
-            #[allow(non_upper_case_globals)]
-            static mut ex_int: f32 = 0.0;
-            #[allow(non_upper_case_globals)]
-            static mut ey_int: f32 = 0.0;
-            #[allow(non_upper_case_globals)]
-            static mut ez_int: f32 = 0.0;
-            let mut ax = if let Some(accel) = imu.accel {
-                accel.x
-            } else {
-                0.0
-            };
-            let mut ay = if let Some(accel) = imu.accel {
-                accel.y
-            } else {
-                0.0
-            };
-            let mut az = if let Some(accel) = imu.accel {
-                accel.z
-            } else {
-                0.0
-            };
-            let mut gx = if let Some(gyro) = imu.gyro {
-                gyro.x
-            } else {
-                0.0
-            };
-            let mut gy = if let Some(gyro) = imu.gyro {
-                gyro.y
-            } else {
-                0.0
-            };
-            let mut gz = if let Some(gyro) = imu.gyro {
-                gyro.z
-            } else {
-                0.0
-            };
-            // 测量正常化
-            let mut norm = sqrtf(ax * ax + ay * ay + az * az);
-            ax = ax / norm; //单位化
-            ay = ay / norm;
-            az = az / norm;
-
-            // 估计方向的重力
-            let vx = 2.0 * (q1 * q3 - q0 * q2);
-            let vy = 2.0 * (q0 * q1 + q2 * q3);
-            let vz = q0 * q0 - q1 * q1 - q2 * q2 + q3 * q3;
-
-            // 错误的领域和方向传感器测量参考方向之间的交叉乘积的总和
-            let ex = ay * vz - az * vy;
-            let ey = az * vx - ax * vz;
-            let ez = ax * vy - ay * vx;
-
-            // 积分误差比例积分增益
-            ex_int = ex_int + ex * Ki;
-            ey_int = ey_int + ey * Ki;
-            ez_int = ez_int + ez * Ki;
-
-            // 调整后的陀螺仪测量
-            gx = gx + Kp * ex + ex_int;
-            gy = gy + Kp * ey + ey_int;
-            gz = gz + Kp * ez + ez_int;
-
-            // 整合四元数率和正常化
-            q0 = q0 + (-q1 * gx - q2 * gy - q3 * gz) * HALF_T;
-            q1 = q1 + (q0 * gx + q2 * gz - q3 * gy) * HALF_T;
-            q2 = q2 + (q0 * gy - q1 * gz + q3 * gx) * HALF_T;
-            q3 = q3 + (q0 * gz + q1 * gy - q2 * gx) * HALF_T;
-
-            // 正常化四元，求平方根
-            norm = sqrtf(q0 * q0 + q1 * q1 + q2 * q2 + q3 * q3);
-            q0 = q0 / norm;
-            q1 = q1 / norm;
-            q2 = q2 / norm;
-            q3 = q3 / norm;
-            imu.quaternion = Some(Quaternion {
-                w: q0,
-                x: q1,
-                y: q2,
-                z: q3,
-            });
-        }
     }
 }
 
@@ -408,10 +258,10 @@ pub enum GyroRange {
 impl GyroRange {
     pub fn range(self) -> f32 {
         match self {
-            _250DEGS => 131.0,
-            _500DEGS => 65.5,
-            _1000DEGS => 32.8,
-            _2000DEGS => 16.4,
+            GyroRange::_250DEGS => 131.0,
+            GyroRange::_500DEGS => 65.5,
+            GyroRange::_1000DEGS => 32.8,
+            GyroRange::_2000DEGS => 16.4,
         }
     }
 }
@@ -430,10 +280,10 @@ pub enum AccelRange {
 impl AccelRange {
     pub fn range(self) -> f32 {
         match self {
-            _2G => 16384.0,
-            _4G => 8192.0,
-            _8G => 4096.0,
-            _16G => 2048.0,
+            AccelRange::_2G => 16384.0,
+            AccelRange::_4G => 8192.0,
+            AccelRange::_8G => 4096.0,
+            AccelRange::_16G => 2048.0,
         }
     }
 }
@@ -490,17 +340,17 @@ impl RawData {
     pub(crate) fn to_imu_data(self, acc_range: f32, gyro_range: f32) -> ImuData {
         const PI_180: f32 = core::f32::consts::PI / 180.0;
         ImuData {
-            accel: Some(Accel {
-                x: self.ax as f32 / acc_range,
-                y: self.ay as f32 / acc_range,
-                z: self.az as f32 / acc_range,
-            }),
+            accel: Some(Accel::new(
+                self.ax as f32 / acc_range,
+                self.ay as f32 / acc_range,
+                self.az as f32 / acc_range,
+            )),
             temp: Some(36.53 + self.temp as f32 / 340.0),
-            gyro: Some(Gyro {
-                x: self.gx as f32 * PI_180 / gyro_range,
-                y: self.gy as f32 * PI_180 / gyro_range,
-                z: self.gz as f32 * PI_180 / gyro_range,
-            }),
+            gyro: Some(Gyro::new(
+                self.gx as f32 * PI_180 / gyro_range,
+                self.gy as f32 * PI_180 / gyro_range,
+                self.gz as f32 * PI_180 / gyro_range,
+            )),
             compass: Default::default(),
             quaternion: Default::default(),
         }
@@ -514,53 +364,49 @@ pub enum Register {
     PwrMgmt1 = 0x6B,
     SmpRtDiv = 0x19,
     WhoAmI = 0x75,
-    AccelOffsetX_H = 0x06,
-    AccelOffsetX_L = 0x07,
-    AccelOffsetY_H = 0x08,
-    AccelOffsetY_L = 0x09,
-    AccelOffsetZ_H = 0x0A,
-    AccelOffsetZ_L = 0x0B,
+    // AccelOffsetX_H = 0x06,
+    // AccelOffsetX_L = 0x07,
+    // AccelOffsetY_H = 0x08,
+    // AccelOffsetY_L = 0x09,
+    // AccelOffsetZ_H = 0x0A,
+    // AccelOffsetZ_L = 0x0B,
 
-    GyroOffsetX_H = 0x13,
-    GyroOffsetX_L = 0x14,
-    GyroOffsetY_H = 0x15,
-    GyroOffsetY_L = 0x16,
-    GyroOffsetZ_H = 0x17,
-    GyroOffsetZ_L = 0x18,
-
+    // GyroOffsetX_H = 0x13,
+    // GyroOffsetX_L = 0x14,
+    // GyroOffsetY_H = 0x15,
+    // GyroOffsetY_L = 0x16,
+    // GyroOffsetZ_H = 0x17,
+    // GyroOffsetZ_L = 0x18,
     AccelX_H = 0x3B,
-    AccelX_L = 0x3C,
-    AccelY_H = 0x3D,
-    AccelY_L = 0x3E,
-    AccelZ_H = 0x3F,
-    AccelZ_L = 0x40,
-
+    // AccelX_L = 0x3C,
+    // AccelY_H = 0x3D,
+    // AccelY_L = 0x3E,
+    // AccelZ_H = 0x3F,
+    // AccelZ_L = 0x40,
     AccelConfig = 0x1C,
 
-    GyroX_H = 0x43,
-    GyroX_L = 0x44,
-    GyroY_H = 0x45,
-    GyroY_L = 0x46,
-    GyroZ_H = 0x47,
-    GyroZ_L = 0x48,
-
+    // GyroX_H = 0x43,
+    // GyroX_L = 0x44,
+    // GyroY_H = 0x45,
+    // GyroY_L = 0x46,
+    // GyroZ_H = 0x47,
+    // GyroZ_L = 0x48,
     GyroConfig = 0x1B,
 
-    UserCtrl = 0x6A,
+    // UserCtrl = 0x6A,
 
-    FifoEn = 0x23,
-    FifoCount_H = 0x72,
-    FifoCount_L = 0x73,
-    FifoRw = 0x74,
+    // FifoEn = 0x23,
+    // FifoCount_H = 0x72,
+    // FifoCount_L = 0x73,
+    // FifoRw = 0x74,
 
     // ---
-    BankSel = 0x6D,
-    MemStartAddr = 0x6E,
-    MemRw = 0x6F,
-    PrgmStart = 0x70,
-    DmpConfig = 0x71,
-
+    // BankSel = 0x6D,
+    // MemStartAddr = 0x6E,
+    // MemRw = 0x6F,
+    // PrgmStart = 0x70,
+    // DmpConfig = 0x71,
     InterruptPinConfig = 0x37, //Interrupt pin configuration register
     InterruptEnable = 0x38,    // Interrupt enable configuration register
-    InterruptStatus = 0x3A,    // Interrupt status register
+                               //InterruptStatus = 0x3A,    // Interrupt status register
 }

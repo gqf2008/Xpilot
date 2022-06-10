@@ -24,12 +24,11 @@ fn sampling(recv: Queue<Message>) {
         if let Some(msg) = recv.pop_front() {
             match msg {
                 Message::ImuData(data) => {
-                    if imu_count % 50 == 0 {
+                    if imu_count % 1000 == 0 {
                         mbus::mbus()
                             .call("/led/red", Message::Control(Signal::Led(LedSignal::Toggle)));
-                        // log::info!("{:?}", data);
                         if let Some(quat) = data.quaternion {
-                            log::info!("{:?}", quat.to_euler().to_degree());
+                            log::info!("{:?}\n{:?}", quat, quat.angle());
                         }
                     }
                     imu_count += 1;

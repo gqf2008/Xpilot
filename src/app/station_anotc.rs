@@ -1,4 +1,4 @@
-use crate::driver::{Accel, EulerAngle, Gyro, Quaternion};
+use crate::driver::{Accel, Gyro, Quaternion};
 use crate::mbus::{self, mbus};
 use crate::message::*;
 use alloc::vec;
@@ -52,17 +52,17 @@ fn sync() {
             match msg {
                 Message::ImuData(data) => {
                     if imu_count % 10 == 0 {
-                        if let Some(accel) = data.accel {
-                            if let Some(gyro) = data.gyro {
-                                send_accel_gyro(accel, gyro);
-                            }
-                        }
+                        // if let Some(accel) = data.accel {
+                        //     if let Some(gyro) = data.gyro {
+                        //         send_accel_gyro(accel, gyro);
+                        //     }
+                        // }
                         if let Some(quat) = data.quaternion {
                             send_quat(quat);
-                            send_euler(quat.to_euler());
+                            send_euler(quat.euler_angles());
                         }
                     }
-                    if imu_count % 100 == 0 {
+                    if imu_count % 10 == 0 {
                         mbus::mbus().call(
                             "/led/blue",
                             Message::Control(Signal::Led(LedSignal::Toggle)),
@@ -76,28 +76,7 @@ fn sync() {
         }
     }
 }
-fn send_accel_gyro(accel: Accel, gyro: Gyro) {
-    let mut buf = vec![0u8; 13];
-    buf.push(0xAA);
-    buf.push(0xAF);
-    buf.push(0x01);
-    buf.push(7);
-    buf.push(accel.x as u8);
-    buf.push(accel.y as u8);
-    buf.push(accel.z as u8);
-    buf.push(gyro.x as u8);
-    buf.push(gyro.y as u8);
-    buf.push(gyro.z as u8);
-    buf.push(0);
-    let (sum, check) = buf
-        .iter()
-        .fold((0u8, 0u8), |(sum, check), b| (sum + *b, check + sum + *b));
-    buf.push(sum);
-    buf.push(check);
-    sync::free(|_| {
-        stdout::write(&buf).ok();
-    });
-}
+
 fn send_quat(quat: Quaternion) {
     let mut buf = vec![0u8; 22];
     buf.push(0xAA);
@@ -107,9 +86,9 @@ fn send_quat(quat: Quaternion) {
     quat.w
         .to_be_bytes()
         .iter()
-        .chain(quat.x.to_be_bytes().iter())
-        .chain(quat.y.to_be_bytes().iter())
-        .chain(quat.z.to_be_bytes().iter())
+        .chain(quat.i.to_be_bytes().iter())
+        .chain(quat.j.to_be_bytes().iter())
+        .chain(quat.k.to_be_bytes().iter())
         .into_iter()
         .for_each(|b| buf.push(*b));
     let (sum, check) = buf
@@ -122,19 +101,42 @@ fn send_quat(quat: Quaternion) {
     });
 }
 
-fn send_euler(euler: EulerAngle) {
+fn send_euler((roll, pitch, yaw): (f32, f32, f32)) {
     let mut buf = vec![0u8; 13];
     buf.push(0xAA);
     buf.push(0xAF);
     buf.push(0x03);
     buf.push(7);
-    ((euler.roll * 100.0) as u16)
+    ((roll * 100.0) as i16)
         .to_be_bytes()
         .iter()
-        .chain(((euler.pitch * 100.0) as u16).to_be_bytes().iter())
-        .chain(((euler.yaw * 100.0) as u16).to_be_bytes().iter())
+        .chain(((pitch * 100.0) as i16).to_be_bytes().iter())
+        .chain(((yaw * 100.0) as i16).to_be_bytes().iter())
         .into_iter()
         .for_each(|b| buf.push(*b));
+    buf.push(0);
+    let (sum, check) = buf
+        .iter()
+        .fold((0u8, 0u8), |(sum, check), b| (sum + *b, check + sum + *b));
+    buf.push(sum);
+    buf.push(check);
+    sync::free(|_| {
+        stdout::write(&buf).ok();
+    });
+}
+
+fn send_accel_gyro(accel: Accel, gyro: Gyro) {
+    let mut buf = vec![0u8; 13];
+    buf.push(0xAA);
+    buf.push(0xAF);
+    buf.push(0x01);
+    buf.push(7);
+    buf.push(accel.x as u8);
+    buf.push(accel.y as u8);
+    buf.push(accel.z as u8);
+    buf.push(gyro.x as u8);
+    buf.push(gyro.y as u8);
+    buf.push(gyro.z as u8);
     buf.push(0);
     let (sum, check) = buf
         .iter()
