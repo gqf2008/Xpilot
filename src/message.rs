@@ -16,18 +16,13 @@ pub enum Message {
     Gps(Gps),
     //控制信号
     Control(Signal),
+
+    None,
 }
 
 #[derive(Debug, Clone, Copy)]
 pub enum Signal {
-    Led(LedSignal),
+    Led,
     Motor {},
     Servo {},
-}
-
-#[derive(Debug, Clone, Copy)]
-pub enum LedSignal {
-    On,
-    Off,
-    Toggle,
 }

@@ -1,7 +1,17 @@
-mod controller;
-mod station_anotc;
+#[cfg(feature = "anotc")]
+mod anotc;
+#[cfg(feature = "mavlink")]
+mod mavlink;
+#[cfg(feature = "msp")]
+mod msp;
+
 pub fn start() {
-    //driver::bldc::motor().unlock();
-    controller::start();
-    station_anotc::start();
+    log::info!("Start xpilot application");
+    #[cfg(feature = "anotc")]
+    anotc::start();
+    #[cfg(feature = "mavlink")]
+    mavlink::start();
+    #[cfg(feature = "msp")]
+    msp::start();
+    log::info!("Start xpilot application ok");
 }

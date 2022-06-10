@@ -6,18 +6,23 @@ version = "0.1.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
 # 默认
-default = ["stm32f427vit6","mpu6050"]
-# gd32vf103
+default = ["stm32f401ccu6", "mpu6050", "anotc", "heli"]
+# chip
 gd32vf103 = []
-# stm32f401ccu6
 stm32f401ccu6 = []
-# stm32f427vit6
 stm32f427vit6 = []
-#dmp
-dmp = []
-mpu6050=[]
-mpu20602=[]
-mpu9250=[]
+# imu
+mpu20602 = []
+mpu6050 = []
+mpu9250 = []
+# ground station
+anotc = []
+mavlink = []
+msp = []
+# Attitude Control System
+fixed = [] # 固定翼
+heli = [] # 直升机
+multi-rotor = [] #多旋翼
 
 [dependencies]
 bare-metal = "1.0.0"
@@ -35,6 +40,7 @@ log = "0.4.17"
 mavlink = {version = "0.10.1", default-features = false, features = ["embedded", "all-dialects"]}
 # mpu6050 = "0.1.5"
 # mpu6050-dmp = {git = "https://github.com/gqf2008/mpu6050-dmp-rs"}
+ahrs = {version = "0.5", default-features = false}
 mpu9250 = {version = "0.24.0", features = ["i2c"]}
 nb = "1.0.0"
 pid = "3.0.0"
@@ -42,9 +48,8 @@ profont = "0.6.1"
 shared-bus = "0.2.3"
 spin = "0.9.3"
 xtask = {path = "../xtask", features = ["stm32f4"]}
-ahrs =  {version = "0.5",default-features = false}
 
 [dependencies.nalgebra]
-version = "0.30"
-features = ["libm-force"]
 default-features = false
+features = ["libm-force"]
+version = "0.30"

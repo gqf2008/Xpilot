@@ -7,7 +7,7 @@ pub fn start() {
     let q = Queue::new();
     let sender = q.clone();
     TaskBuilder::new()
-        .name("controller")
+        .name("heli")
         .priority(1)
         .stack_size(1024)
         .spawn(move || sampling(q));
@@ -25,9 +25,8 @@ fn sampling(recv: Queue<Message>) {
             match msg {
                 Message::ImuData(data) => {
                     if imu_count % 1000 == 0 {
-                        mbus::mbus()
-                            .call("/led/red", Message::Control(Signal::Led(LedSignal::Toggle)));
-                        log::info!("{:?}", data);
+                        mbus::mbus().call("/led/r/toggle", Message::None);
+                        //log::info!("{:?}", data);
                     }
                     imu_count += 1;
                 }

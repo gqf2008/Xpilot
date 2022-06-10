@@ -1,6 +1,7 @@
 use crate::mbus;
-use crate::message::*;
+#[cfg(feature = "stm32f427vit6")]
 use embedded_hal::digital::v2::{OutputPin, ToggleableOutputPin};
+#[cfg(feature = "stm32f427vit6")]
 use xtask::bsp::greenpill::hal::gpio::Output;
 use xtask::bsp::greenpill::hal::gpio::Pin;
 
@@ -10,8 +11,13 @@ use xtask::bsp::greenpill::led::Led;
 #[cfg(feature = "stm32f401ccu6")]
 static mut LED: Option<Led> = None;
 
+#[cfg(feature = "stm32f427vit6")]
 static mut RED: Option<Led427<Pin<'C', 6, Output>>> = None;
+
+#[cfg(feature = "stm32f427vit6")]
 static mut GREEN: Option<Led427<Pin<'C', 7, Output>>> = None;
+
+#[cfg(feature = "stm32f427vit6")]
 static mut BLUE: Option<Led427<Pin<'A', 8, Output>>> = None;
 
 #[cfg(feature = "stm32f401ccu6")]
@@ -20,60 +26,52 @@ pub unsafe fn init_401(pin: Pin<'C', 13>) {
     let led = Led::new(pin);
     LED.replace(led);
     log::info!("init led ok");
-    mbus::mbus().register_serivce("/led/red", |_, msg| match msg {
-        Message::Control(Signal::Led(LedSignal::On)) => {
-            if let Some(red) = LED.as_mut() {
-                red.on();
+    mbus::mbus()
+        .register("/led/r/on", |_, _| {
+            if let Some(led) = LED.as_mut() {
+                led.on();
             }
-        }
-        Message::Control(Signal::Led(LedSignal::Off)) => {
-            if let Some(red) = LED.as_mut() {
-                red.off();
+        })
+        .register("/led/r/off", |_, _| {
+            if let Some(led) = LED.as_mut() {
+                led.off();
             }
-        }
-        Message::Control(Signal::Led(LedSignal::Toggle)) => {
-            if let Some(red) = LED.as_mut() {
-                red.toggle();
+        })
+        .register("/led/r/toggle", |_, _| {
+            if let Some(led) = LED.as_mut() {
+                led.toggle();
             }
-        }
-        _ => {}
-    });
-    mbus::mbus().register_serivce("/led/green", |_, msg| match msg {
-        Message::Control(Signal::Led(LedSignal::On)) => {
-            if let Some(red) = LED.as_mut() {
-                red.on();
+        })
+        .register("/led/g/on", |_, _| {
+            if let Some(led) = LED.as_mut() {
+                led.on();
             }
-        }
-        Message::Control(Signal::Led(LedSignal::Off)) => {
-            if let Some(red) = LED.as_mut() {
-                red.off();
+        })
+        .register("/led/g/off", |_, _| {
+            if let Some(led) = LED.as_mut() {
+                led.off();
             }
-        }
-        Message::Control(Signal::Led(LedSignal::Toggle)) => {
-            if let Some(red) = LED.as_mut() {
-                red.toggle();
+        })
+        .register("/led/g/toggle", |_, _| {
+            if let Some(led) = LED.as_mut() {
+                led.toggle();
             }
-        }
-        _ => {}
-    });
-    mbus::mbus().register_serivce("/led/blue", |_, msg| match msg {
-        Message::Control(Signal::Led(LedSignal::On)) => {
-            if let Some(red) = LED.as_mut() {
-                red.on();
+        })
+        .register("/led/b/on", |_, _| {
+            if let Some(led) = LED.as_mut() {
+                led.on();
             }
-        }
-        Message::Control(Signal::Led(LedSignal::Off)) => {
-            if let Some(red) = LED.as_mut() {
-                red.off();
+        })
+        .register("/led/b/off", |_, _| {
+            if let Some(led) = LED.as_mut() {
+                led.off();
             }
-        }
-        Message::Control(Signal::Led(LedSignal::Toggle)) => {
-            if let Some(red) = LED.as_mut() {
-                red.toggle();
+        })
+        .register("/led/b/toggle", |_, _| {
+            if let Some(led) = LED.as_mut() {
+                led.toggle();
             }
-        }
-        _ => {}
-    });
+        });
 }
 
 #[cfg(feature = "stm32f427vit6")]
@@ -85,67 +83,60 @@ pub unsafe fn init_427(red: Pin<'C', 6>, green: Pin<'C', 7>, blue: Pin<'A', 8>) 
     GREEN.replace(led);
     let led = Led427::new(blue.into_push_pull_output());
     BLUE.replace(led);
-    mbus::mbus().register_serivce("/led/red", |_, msg| match msg {
-        Message::Control(Signal::Led(LedSignal::On)) => {
-            if let Some(red) = RED.as_mut() {
-                red.on();
+    mbus::mbus()
+        .register("/led/r/on", |_, _| {
+            if let Some(led) = RED.as_mut() {
+                led.on();
             }
-        }
-        Message::Control(Signal::Led(LedSignal::Off)) => {
-            if let Some(red) = RED.as_mut() {
-                red.off();
+        })
+        .register("/led/r/off", |_, _| {
+            if let Some(led) = RED.as_mut() {
+                led.off();
             }
-        }
-        Message::Control(Signal::Led(LedSignal::Toggle)) => {
-            if let Some(red) = RED.as_mut() {
-                red.toggle();
+        })
+        .register("/led/r/toggle", |_, _| {
+            if let Some(led) = RED.as_mut() {
+                led.toggle();
             }
-        }
-        _ => {}
-    });
-    mbus::mbus().register_serivce("/led/green", |_, msg| match msg {
-        Message::Control(Signal::Led(LedSignal::On)) => {
-            if let Some(red) = GREEN.as_mut() {
-                red.on();
+        })
+        .register("/led/g/on", |_, _| {
+            if let Some(led) = GREEN.as_mut() {
+                led.on();
             }
-        }
-        Message::Control(Signal::Led(LedSignal::Off)) => {
-            if let Some(red) = GREEN.as_mut() {
-                red.off();
+        })
+        .register("/led/g/off", |_, _| {
+            if let Some(led) = GREEN.as_mut() {
+                led.off();
             }
-        }
-        Message::Control(Signal::Led(LedSignal::Toggle)) => {
-            if let Some(red) = GREEN.as_mut() {
-                red.toggle();
+        })
+        .register("/led/g/toggle", |_, _| {
+            if let Some(led) = GREEN.as_mut() {
+                led.toggle();
             }
-        }
-        _ => {}
-    });
-    mbus::mbus().register_serivce("/led/blue", |_, msg| match msg {
-        Message::Control(Signal::Led(LedSignal::On)) => {
-            if let Some(red) = BLUE.as_mut() {
-                red.on();
+        })
+        .register("/led/b/on", |_, _| {
+            if let Some(led) = BLUE.as_mut() {
+                led.on();
             }
-        }
-        Message::Control(Signal::Led(LedSignal::Off)) => {
-            if let Some(red) = BLUE.as_mut() {
-                red.off();
+        })
+        .register("/led/b/off", |_, _| {
+            if let Some(led) = BLUE.as_mut() {
+                led.off();
             }
-        }
-        Message::Control(Signal::Led(LedSignal::Toggle)) => {
-            if let Some(red) = BLUE.as_mut() {
-                red.toggle();
+        })
+        .register("/led/b/toggle", |_, _| {
+            if let Some(led) = BLUE.as_mut() {
+                led.toggle();
             }
-        }
-        _ => {}
-    });
+        });
     log::info!("init led ok");
 }
 
+#[cfg(feature = "stm32f427vit6")]
 pub struct Led427<T> {
     port: T,
 }
-
+#[cfg(feature = "stm32f427vit6")]
 impl<T: OutputPin + ToggleableOutputPin> Led427<T> {
     pub fn new(port: T) -> Self {
         Self { port }

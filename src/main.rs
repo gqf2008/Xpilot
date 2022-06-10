@@ -6,6 +6,7 @@
 
 extern crate alloc;
 
+mod acs;
 mod app;
 mod driver;
 mod mbus;
@@ -16,7 +17,7 @@ use xtask::arch::cortex_m::rt;
 #[cfg(feature = "gd32vf103")]
 use xtask::arch::riscv::rt;
 
-unsafe fn init() {
+unsafe fn init_heap() {
     #[cfg(feature = "gd32vf103")]
     {
         extern "C" {
@@ -60,13 +61,13 @@ unsafe fn init() {
 #[rt::entry]
 fn main() -> ! {
     unsafe {
-        init();
+        init_heap();
     }
     driver::init();
-    log::info!("Start xpilot application");
     // 启动应用
     app::start();
-
+    // 启动姿态控制
+    acs::start();
     //启动调度器
     xtask::start()
 }

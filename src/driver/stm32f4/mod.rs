@@ -54,7 +54,7 @@ pub unsafe fn init() {
     use xtask::chip::TICK_CLOCK_HZ;
     log::info!("CPU_CLOCK {}Hz", CPU_CLOCK_HZ);
     log::info!("SYSTICK_CLOCK {}Hz", SYSTICK_CLOCK_HZ);
-    log::info!("TICK_CLOCK {}Hz", TICK_CLOCK_HZ);
+    log::info!("OS_TICK_CLOCK {}Hz", TICK_CLOCK_HZ);
     if let Some(dp) = pac::Peripherals::take() {
         let rcc = dp.RCC.constrain();
         let clocks = rcc

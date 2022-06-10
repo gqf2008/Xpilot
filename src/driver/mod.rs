@@ -9,19 +9,22 @@ mod stm32f4;
 pub mod bldc;
 pub mod icm20602;
 pub mod mpu6050;
+pub mod ppm;
+pub mod sbus;
 pub mod servo;
 
 use nalgebra::UnitQuaternion;
 use nalgebra::Vector3;
 
 pub fn init() {
-    log::info!("Initialize driver");
     #[cfg(feature = "gd32vf103")]
     unsafe {
+        log::info!("Initialize gd32vf103 driver");
         gd32vf103::init()
     }
     #[cfg(any(feature = "stm32f401ccu6", feature = "stm32f427vit6"))]
     unsafe {
+        log::info!("Initialize stm32f4 driver");
         stm32f4::init()
     }
     log::info!("Initialize driver ok");

@@ -73,13 +73,13 @@ pub(crate) unsafe fn init_401(
     clocks: &Clocks,
 ) {
     log::info!("Initialize mpu6050");
-    match Mpu6050::new(i2c).build() {
-        Ok(mut mpu) => {
+    let sample_rate = 1000;
+    MADGWICK.replace(Madgwick::new(1.0 / sample_rate as f32, 0.1));
+    match Mpu6050::new(i2c).with_sample_rate(sample_rate).build() {
+        Ok(mpu) => {
             MPU.replace(mpu);
             let mut timer = Timer1::new(tim, clocks).counter_hz();
-            timer
-                .start((crate::driver::mpu6050::SAMPLE_RATE as u32).Hz())
-                .ok();
+            timer.start((sample_rate as u32).Hz()).ok();
             timer.listen(Event::Update);
             TIMER.replace(timer);
             NVIC::unmask(Interrupt::TIM1_UP_TIM10);

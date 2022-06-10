@@ -28,17 +28,17 @@ impl<PWM: PwmPin<Duty = u16>> Motor<PWM> {
     pub fn lock(&mut self) {
         self.state = State::Locked;
         self.pwm.disable();
-        mbus::mbus().call("/led/green", Message::Control(Signal::Led(LedSignal::Off)));
-        mbus::mbus().call("/led/red", Message::Control(Signal::Led(LedSignal::On)));
+        mbus::mbus().call("/led/g/off", Message::Control(Signal::Led));
+        mbus::mbus().call("/led/r/on", Message::Control(Signal::Led));
     }
     /// 解锁马达，红闪3下，绿开
     pub fn unlock(&mut self) {
         self.state = State::Unlocked;
         for _ in 0..6 {
-            mbus::mbus().call("/led/red", Message::Control(Signal::Led(LedSignal::Toggle)));
+            mbus::mbus().call("/led/r/toggle", Message::Control(Signal::Led));
             xtask::delay_us(1000 * 500);
         }
-        mbus::mbus().call("/led/green", Message::Control(Signal::Led(LedSignal::On)));
+        mbus::mbus().call("/led/g/on", Message::Control(Signal::Led));
         self.pwm.enable();
     }
 
@@ -68,10 +68,7 @@ impl<PWM: PwmPin<Duty = u16>> Motor<PWM> {
         if self.state == State::Unlocked {
             self.pwm
                 .set_duty((self.pwm.get_max_duty() as f32 * (duty + 0.5)) as u16);
-            mbus::mbus().call(
-                "/led/blue",
-                Message::Control(Signal::Led(LedSignal::Toggle)),
-            );
+            mbus::mbus().call("/led/b/toggle", Message::None);
         }
     }
 }

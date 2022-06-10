@@ -1,3 +1,5 @@
+//! 匿名上位机通信协议
+
 use crate::driver::{Accel, Gyro, Quaternion};
 use crate::mbus::{self, mbus};
 use crate::message::*;
@@ -53,15 +55,12 @@ fn sync() {
                 Message::ImuData(data) => {
                     if imu_count % 10 == 0 {
                         if let Some(quat) = data.quaternion {
-                            //send_quat(quat);
+                            send_quat(quat);
                             send_euler(quat.euler_angles());
                         }
                     }
                     if imu_count % 100 == 0 {
-                        mbus::mbus().call(
-                            "/led/blue",
-                            Message::Control(Signal::Led(LedSignal::Toggle)),
-                        );
+                        mbus::mbus().call("/led/b/toggle", Message::None);
                     }
                     imu_count += 1;
                 }
@@ -71,7 +70,7 @@ fn sync() {
     }
 }
 
-fn _send_quat(quat: Quaternion) {
+fn send_quat(quat: Quaternion) {
     let mut buf = vec![0u8; 22];
     buf.push(0xAA);
     buf.push(0xAF);
