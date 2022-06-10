@@ -110,7 +110,7 @@ pub(crate) unsafe fn init_427(
 ) {
     log::info!("Initialize mpu6050");
     let sample_rate = 1000;
-    MADGWICK.replace(Madgwick::new(1.0 / sample_rate as f32, 0.05));
+    MADGWICK.replace(Madgwick::new(1.0 / sample_rate as f32, 0.1));
     match Mpu6050::new(i2c).with_sample_rate(sample_rate).build() {
         Ok(mpu) => {
             MPU.replace(mpu);
