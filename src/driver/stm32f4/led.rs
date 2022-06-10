@@ -3,8 +3,11 @@ use crate::message::*;
 use embedded_hal::digital::v2::{OutputPin, ToggleableOutputPin};
 use xtask::bsp::greenpill::hal::gpio::Output;
 use xtask::bsp::greenpill::hal::gpio::Pin;
+
+#[cfg(feature = "stm32f401ccu6")]
 use xtask::bsp::greenpill::led::Led;
 
+#[cfg(feature = "stm32f401ccu6")]
 static mut LED: Option<Led> = None;
 
 static mut RED: Option<Led427<Pin<'C', 6, Output>>> = None;

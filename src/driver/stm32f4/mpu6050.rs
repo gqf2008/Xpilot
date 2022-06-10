@@ -12,7 +12,7 @@ use xtask::{
     bsp::greenpill::hal::{
         gpio::{Alternate, OpenDrain, Pin},
         i2c::I2c,
-        pac::{interrupt, Interrupt, TIM1},
+        pac::{Interrupt, TIM1},
         prelude::*,
         rcc::Clocks,
         timer::{Event, Timer1},
@@ -144,7 +144,6 @@ unsafe fn timer_isr() {
                         mbus::mbus().publish_isr("/imu", crate::message::Message::ImuData(data));
                     }
                 }
-
                 Err(err) => {
                     log::error!("mpu6050 error {:?}", err);
                 }

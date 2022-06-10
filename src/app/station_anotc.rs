@@ -121,7 +121,7 @@ fn send_euler((roll, pitch, yaw): (f32, f32, f32)) {
     });
 }
 
-fn send_accel_gyro(accel: Accel, gyro: Gyro) {
+fn _send_accel_gyro(accel: Accel, gyro: Gyro) {
     let mut buf = vec![0u8; 13];
     buf.push(0xAA);
     buf.push(0xAF);
