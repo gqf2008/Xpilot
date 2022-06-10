@@ -10,7 +10,7 @@ fn main() {
 
     #[cfg(feature = "stm32f401ccu6")]
     fs::copy("src/driver/stm32f4/memory-401.x", out_dir.join("memory.x")).unwrap();
-    #[cfg(feature = "stm32427vit6")]
+    #[cfg(feature = "stm32f427vit6")]
     fs::copy("src/driver/stm32f4/memory-427.x", out_dir.join("memory.x")).unwrap();
 
     println!("cargo:rerun-if-changed=memory.x");

@@ -4,14 +4,12 @@
 #![feature(const_option)]
 #![feature(associated_type_bounds)]
 
+extern crate alloc;
+
 mod app;
 mod driver;
 mod mbus;
 mod message;
-
-#[macro_use]
-extern crate bitflags;
-extern crate alloc;
 
 #[cfg(any(feature = "stm32f401ccu6", feature = "stm32f427vit6"))]
 use xtask::arch::cortex_m::rt;
