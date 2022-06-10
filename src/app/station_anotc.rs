@@ -53,7 +53,7 @@ fn sync() {
                 Message::ImuData(data) => {
                     if imu_count % 10 == 0 {
                         if let Some(quat) = data.quaternion {
-                            send_quat(quat);
+                            //send_quat(quat);
                             send_euler(quat.euler_angles());
                         }
                     }
@@ -63,17 +63,15 @@ fn sync() {
                             Message::Control(Signal::Led(LedSignal::Toggle)),
                         );
                     }
-
                     imu_count += 1;
                 }
-
                 _ => {}
             }
         }
     }
 }
 
-fn send_quat(quat: Quaternion) {
+fn _send_quat(quat: Quaternion) {
     let mut buf = vec![0u8; 22];
     buf.push(0xAA);
     buf.push(0xAF);
