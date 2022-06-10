@@ -75,7 +75,6 @@ pub(crate) unsafe fn init_401(
     log::info!("Initialize mpu6050");
     match Mpu6050::new(i2c).build() {
         Ok(mut mpu) => {
-            mpu.cal_gyro_offset().ok();
             MPU.replace(mpu);
             let mut timer = Timer1::new(tim, clocks).counter_hz();
             timer
@@ -128,8 +127,8 @@ pub(crate) unsafe fn init_427(
     }
 }
 
-#[interrupt]
-unsafe fn TIM1_UP_TIM10() {
+#[export_name = "TIM1_UP_TIM10"]
+unsafe fn timer_isr() {
     if let Some(timer) = TIMER.as_mut() {
         timer.clear_interrupt(Event::Update);
     }

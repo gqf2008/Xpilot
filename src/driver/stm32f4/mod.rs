@@ -1,9 +1,11 @@
 pub mod led;
-#[cfg(not(feature = "dmp"))]
+#[cfg(feature = "mpu6050")]
 pub mod mpu6050;
-#[cfg(feature = "dmp")]
-pub mod mpu6050_dmp;
+// #[cfg(feature = "dmp")]
+// pub mod mpu6050_dmp;
+#[cfg(feature = "mpu9250")]
 pub mod mpu9250;
+
 use shared_bus::{BusManager, BusManagerSimple, NullMutex};
 use xtask::bsp::greenpill::hal::{
     gpio::{Alternate, OpenDrain, Pin},
@@ -136,19 +138,19 @@ pub unsafe fn init() {
             let i2c = bus.acquire_i2c();
 
             //陀螺仪
-            #[cfg(not(feature = "dmp"))]
+            #[cfg(feature = "mpu6050")]
             {
                 #[cfg(feature = "stm32f401ccu6")]
                 mpu6050::init_401(dp.TIM1, i2c, &clocks);
                 #[cfg(feature = "stm32f427vit6")]
                 mpu6050::init_427(dp.TIM1, i2c, &clocks);
             }
-            #[cfg(feature = "dmp")]
+            #[cfg(feature = "mpu9250")]
             {
                 #[cfg(feature = "stm32f401ccu6")]
-                mpu6050_dmp::init_401(dp.TIM1, i2c, &clocks);
+                mpu9250::init_401(dp.TIM1, i2c, &clocks);
                 #[cfg(feature = "stm32f427vit6")]
-                mpu6050_dmp::init_427(dp.TIM1, i2c, &clocks);
+                mpu9250::init_427(dp.TIM1, i2c, &clocks);
             }
         }
     }

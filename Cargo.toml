@@ -6,7 +6,7 @@ version = "0.1.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
 # 默认
-default = ["stm32f427vit6"]
+default = ["stm32f427vit6","mpu6050"]
 # gd32vf103
 gd32vf103 = []
 # stm32f401ccu6
@@ -15,6 +15,9 @@ stm32f401ccu6 = []
 stm32f427vit6 = []
 #dmp
 dmp = []
+mpu6050=[]
+mpu20602=[]
+mpu9250=[]
 
 [dependencies]
 bare-metal = "1.0.0"
