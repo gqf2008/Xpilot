@@ -1,6 +1,8 @@
 //! 匿名上位机通信协议
 
 use crate::driver::{Accel, Gyro, Quaternion};
+use crate::filter::dither::DitherFilter;
+use crate::filter::Filter;
 use crate::mbus::{self, mbus};
 use crate::message::*;
 use alloc::vec;
@@ -31,6 +33,9 @@ pub fn start() {
 
 fn sync() {
     let mut imu_count = 0u64;
+    let mut dither_roll = DitherFilter::<10>::new();
+    let mut dither_pitch = DitherFilter::<10>::new();
+    let mut dither_yaw = DitherFilter::<10>::new();
     let recv: &'static Queue<Message> = unsafe { Q.as_ref().unwrap() };
     let mut buf = vec![0u8; 10];
     buf.push(0xAA);
@@ -53,10 +58,19 @@ fn sync() {
         if let Some(msg) = recv.pop_front() {
             match msg {
                 Message::ImuData(data) => {
+                    let euler = if let Some(quat) = data.quaternion {
+                        // send_quat(quat);
+                        let (mut roll, mut pitch, mut yaw) = quat.euler_angles();
+                        dither_roll.do_filter(roll, &mut roll);
+                        dither_pitch.do_filter(pitch, &mut pitch);
+                        dither_yaw.do_filter(yaw, &mut yaw);
+                        Some((roll, pitch, yaw))
+                    } else {
+                        None
+                    };
                     if imu_count % 100 == 0 {
-                        if let Some(quat) = data.quaternion {
-                            send_quat(quat);
-                            send_euler(quat.euler_angles());
+                        if let Some(euler) = euler {
+                            send_euler(euler);
                         }
                     }
                     if imu_count % 100 == 0 {
