@@ -67,7 +67,7 @@ pub unsafe fn init() {
         let gpioc = dp.GPIOC.split();
         match dp
             .USART1
-            .tx(gpioa.pa9.into_alternate(), 460800.bps(), &clocks)
+            .tx(gpioa.pa9.into_alternate(), 115200.bps(), &clocks)
         {
             Ok(tx) => {
                 stdout::use_tx1(tx);

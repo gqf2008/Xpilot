@@ -53,7 +53,7 @@ fn sync() {
         if let Some(msg) = recv.pop_front() {
             match msg {
                 Message::ImuData(data) => {
-                    if imu_count % 10 == 0 {
+                    if imu_count % 100 == 0 {
                         if let Some(quat) = data.quaternion {
                             send_quat(quat);
                             send_euler(quat.euler_angles());

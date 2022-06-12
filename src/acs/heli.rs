@@ -24,7 +24,7 @@ fn sampling(recv: Queue<Message>) {
         if let Some(msg) = recv.pop_front() {
             match msg {
                 Message::ImuData(data) => {
-                    if imu_count % 1000 == 0 {
+                    if imu_count % 200 == 0 {
                         mbus::mbus().call("/led/r/toggle", Message::None);
                         //log::info!("{:?}", data);
                     }

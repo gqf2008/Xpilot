@@ -11,6 +11,7 @@ mod app;
 mod driver;
 mod mbus;
 mod message;
+mod filter;
 
 #[cfg(any(feature = "stm32f401ccu6", feature = "stm32f427vit6"))]
 use xtask::arch::cortex_m::rt;
