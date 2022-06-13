@@ -21,7 +21,7 @@ pub struct DitherFilter<const N: usize> {
 }
 
 impl<const N: usize> DitherFilter<N> {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
             value: 0.0,
             count: 0,

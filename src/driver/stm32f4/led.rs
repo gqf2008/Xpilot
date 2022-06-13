@@ -21,11 +21,10 @@ static mut GREEN: Option<Led427<Pin<'C', 7, Output>>> = None;
 static mut BLUE: Option<Led427<Pin<'A', 8, Output>>> = None;
 
 #[cfg(feature = "stm32f401ccu6")]
-pub unsafe fn init_401(pin: Pin<'C', 13>) {
-    log::info!("init led");
+pub unsafe fn init(pin: Pin<'C', 13>) {
+    log::info!("Initialize led");
     let led = Led::new(pin);
     LED.replace(led);
-    log::info!("init led ok");
     mbus::mbus()
         .register("/led/r/on", |_, _| {
             if let Some(led) = LED.as_mut() {
@@ -72,11 +71,12 @@ pub unsafe fn init_401(pin: Pin<'C', 13>) {
                 led.toggle();
             }
         });
+    log::info!("Initialize led ok");
 }
 
 #[cfg(feature = "stm32f427vit6")]
-pub unsafe fn init_427(red: Pin<'C', 6>, green: Pin<'C', 7>, blue: Pin<'A', 8>) {
-    log::info!("init led");
+pub unsafe fn init(red: Pin<'C', 6>, green: Pin<'C', 7>, blue: Pin<'A', 8>) {
+    log::info!("Initialize led");
     let led = Led427::new(red.into_push_pull_output());
     RED.replace(led);
     let led = Led427::new(green.into_push_pull_output());
@@ -129,7 +129,7 @@ pub unsafe fn init_427(red: Pin<'C', 6>, green: Pin<'C', 7>, blue: Pin<'A', 8>) 
                 led.toggle();
             }
         });
-    log::info!("init led ok");
+    log::info!("Initialize led ok");
 }
 
 #[cfg(feature = "stm32f427vit6")]

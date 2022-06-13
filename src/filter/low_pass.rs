@@ -10,7 +10,7 @@ pub struct LowPassFilter {
 impl LowPassFilter {
     /// value 已有值
     /// a 滤波系数0.0-1.0
-    pub fn new(value: f32, a: f32) -> Self {
+    pub const fn new(value: f32, a: f32) -> Self {
         Self { value, a }
     }
 }

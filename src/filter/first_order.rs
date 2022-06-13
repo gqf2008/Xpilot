@@ -20,7 +20,7 @@ impl FirstOrderFilter {
     /// a 滤波系数，0.0-1.0
     /// 系数越小，滤波结果越平稳，但是灵敏度越低；
     /// 系数越大，灵敏度越高，但是滤波结果越不稳定。
-    pub fn new(a: f32) -> Self {
+    pub const fn new(a: f32) -> Self {
         Self { a, value: 0.0 }
     }
 }

@@ -7,7 +7,6 @@ pub use gd32vf103::{bldc, led, mpu6050, serial, servo};
 mod stm32f4;
 
 pub mod bldc;
-pub mod icm20602;
 pub mod mpu6050;
 pub mod ppm;
 pub mod sbus;
@@ -22,9 +21,14 @@ pub fn init() {
         log::info!("Initialize gd32vf103 driver");
         gd32vf103::init()
     }
-    #[cfg(any(feature = "stm32f401ccu6", feature = "stm32f427vit6"))]
+    #[cfg(feature = "stm32f401ccu6")]
     unsafe {
-        log::info!("Initialize stm32f4 driver");
+        log::info!("Initialize stm32f401ccu6 driver");
+        stm32f4::init()
+    }
+    #[cfg(feature = "stm32f427vit6")]
+    unsafe {
+        log::info!("Initialize stm32f427vit6 driver");
         stm32f4::init()
     }
     log::info!("Initialize driver ok");

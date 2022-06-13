@@ -20,11 +20,15 @@ pub fn start() {
 
 fn sampling(recv: Queue<Message>) {
     let mut imu_count = 0u64;
+    #[cfg(feature = "mpu9250")]
+    let m = 10;
+    #[cfg(any(feature = "mpu6050", feature = "icm20602"))]
+    let m = 100;
     loop {
         if let Some(msg) = recv.pop_front() {
             match msg {
                 Message::ImuData(data) => {
-                    if imu_count % 200 == 0 {
+                    if imu_count % m == 0 {
                         mbus::mbus().call("/led/r/toggle", Message::None);
                         //log::info!("{:?}", data);
                     }

@@ -15,7 +15,7 @@ pub struct MovingAverageFilter<const N: usize> {
     values: [f32; N],
 }
 impl<const N: usize> MovingAverageFilter<N> {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self { values: [0.0; N] }
     }
 }

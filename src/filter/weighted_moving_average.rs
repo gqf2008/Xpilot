@@ -17,10 +17,9 @@ pub struct WeightedMovingAverageFilter<const N: usize> {
     sum_coe: u32,
 }
 impl<const N: usize> WeightedMovingAverageFilter<N> {
-    pub fn new() -> Self {
-        let sum_coe = (1..N).fold(0, |acc, v| acc + v) as u32;
+    pub const fn new(cos: [f32; N], sum_coe: u32) -> Self {
         Self {
-            values: [0.0; N],
+            values: cos,
             sum_coe,
         }
     }

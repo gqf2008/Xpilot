@@ -1,4 +1,6 @@
 use crate::driver::mpu6050::*;
+use crate::filter::dither::DitherFilter;
+use crate::filter::Filter;
 use crate::mbus;
 use ahrs::{Ahrs, Madgwick};
 use shared_bus::{I2cProxy, NullMutex};
@@ -56,7 +58,7 @@ static mut TIMER: Option<CounterHz<TIM1>> = None;
 static mut MADGWICK: Option<Madgwick<f32>> = None;
 
 #[cfg(feature = "stm32f401ccu6")]
-pub(crate) unsafe fn init_401(
+pub(crate) unsafe fn init(
     tim: TIM1,
     i2c: I2cProxy<
         'static,
@@ -86,13 +88,13 @@ pub(crate) unsafe fn init_401(
             log::info!("Initialize mpu6050 ok");
         }
         Err(err) => {
-            log::error!("Initialize mpu6050 error {:?}", err);
+            panic!("{:?}", err);
         }
     }
 }
 
 #[cfg(feature = "stm32f427vit6")]
-pub(crate) unsafe fn init_427(
+pub(crate) unsafe fn init(
     tim: TIM1,
     i2c: I2cProxy<
         'static,
@@ -132,13 +134,25 @@ unsafe fn timer_isr() {
     if let Some(timer) = TIMER.as_mut() {
         timer.clear_interrupt(Event::Update);
     }
+    static mut GX_FILTER: DitherFilter<100> = DitherFilter::<100>::new();
+    static mut GY_FILTER: DitherFilter<100> = DitherFilter::<100>::new();
+    static mut GZ_FILTER: DitherFilter<100> = DitherFilter::<100>::new();
+    static mut AX_FILTER: DitherFilter<100> = DitherFilter::<100>::new();
+    static mut AY_FILTER: DitherFilter<100> = DitherFilter::<100>::new();
+    static mut AZ_FILTER: DitherFilter<100> = DitherFilter::<100>::new();
     let ahrs = MADGWICK.as_mut().unwrap();
     xtask::sync::free(|_| {
         if let Some(mpu) = MPU.as_mut() {
             match mpu.accel_gyro() {
                 Ok(data) => {
-                    let gyro = data.gyro.unwrap();
-                    let acc = data.accel.unwrap();
+                    let mut gyro = data.gyro.unwrap();
+                    // GX_FILTER.do_filter(gyro[0], &mut gyro[0]);
+                    // GY_FILTER.do_filter(gyro[1], &mut gyro[1]);
+                    // GZ_FILTER.do_filter(gyro[2], &mut gyro[2]);
+                    let mut acc = data.accel.unwrap();
+                    // AX_FILTER.do_filter(acc[0], &mut acc[0]);
+                    // AY_FILTER.do_filter(acc[1], &mut acc[1]);
+                    // AZ_FILTER.do_filter(acc[2], &mut acc[2]);
                     if let Ok(quat) = ahrs.update_imu(&gyro, &acc) {
                         let data = data.quate(*quat);
                         mbus::mbus().publish_isr("/imu", crate::message::Message::ImuData(data));

@@ -2,6 +2,7 @@
 
 use crate::driver::{Accel, Gyro, Quaternion};
 use crate::filter::dither::DitherFilter;
+use crate::filter::first_order::FirstOrderFilter;
 use crate::filter::Filter;
 use crate::mbus::{self, mbus};
 use crate::message::*;
@@ -33,9 +34,9 @@ pub fn start() {
 
 fn sync() {
     let mut imu_count = 0u64;
-    let mut dither_roll = DitherFilter::<10>::new();
-    let mut dither_pitch = DitherFilter::<10>::new();
-    let mut dither_yaw = DitherFilter::<10>::new();
+    // let mut dither_roll = DitherFilter::<10>::new();
+    // let mut dither_pitch = DitherFilter::<10>::new();
+    // let mut dither_yaw = FirstOrderFilter::new(0.001);
     let recv: &'static Queue<Message> = unsafe { Q.as_ref().unwrap() };
     let mut buf = vec![0u8; 10];
     buf.push(0xAA);
@@ -54,26 +55,26 @@ fn sync() {
     sync::free(|_| {
         stdout::write(&buf).ok();
     });
+    #[cfg(feature = "mpu9250")]
+    let m = 1;
+    #[cfg(any(feature = "mpu6050", feature = "icm20602"))]
+    let m = 10;
     loop {
         if let Some(msg) = recv.pop_front() {
             match msg {
                 Message::ImuData(data) => {
-                    let euler = if let Some(quat) = data.quaternion {
-                        // send_quat(quat);
-                        let (mut roll, mut pitch, mut yaw) = quat.euler_angles();
-                        dither_roll.do_filter(roll, &mut roll);
-                        dither_pitch.do_filter(pitch, &mut pitch);
-                        dither_yaw.do_filter(yaw, &mut yaw);
-                        Some((roll, pitch, yaw))
-                    } else {
-                        None
-                    };
-                    if imu_count % 100 == 0 {
-                        if let Some(euler) = euler {
-                            send_euler(euler);
+                    if let Some(quat) = data.quaternion {
+                        // let (mut roll, mut pitch, mut yaw) = quat.euler_angles();
+                        // dither_roll.do_filter(roll, &mut roll);
+                        // dither_pitch.do_filter(pitch, &mut pitch);
+                        // dither_yaw.do_filter(yaw, &mut yaw);
+                        if imu_count % m == 0 {
+                            send_quat(quat);
+                            send_euler(quat.euler_angles());
                         }
                     }
-                    if imu_count % 100 == 0 {
+
+                    if imu_count % (m * 10) == 0 {
                         mbus::mbus().call("/led/b/toggle", Message::None);
                     }
                     imu_count += 1;

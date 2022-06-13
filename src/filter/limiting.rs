@@ -15,7 +15,7 @@ pub struct LimitingFilter {
 }
 
 impl LimitingFilter {
-    pub fn new(limit: f32) -> Self {
+    pub const fn new(limit: f32) -> Self {
         Self { value: 0.0, limit }
     }
 }

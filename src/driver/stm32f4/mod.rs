@@ -1,23 +1,30 @@
+#[cfg(feature = "icm20602")]
+pub mod icm20602;
 pub mod led;
 #[cfg(feature = "mpu6050")]
 pub mod mpu6050;
-// #[cfg(feature = "dmp")]
-// pub mod mpu6050_dmp;
 #[cfg(feature = "mpu9250")]
 pub mod mpu9250;
 
 use shared_bus::{BusManager, BusManagerSimple, NullMutex};
 use xtask::bsp::greenpill::hal::{
+    gpio::PushPull,
+    spi::{Master, TransferModeNormal},
+};
+use xtask::bsp::greenpill::hal::{
     gpio::{Alternate, OpenDrain, Pin},
     i2c::I2c,
     pac,
     prelude::*,
+    spi::{Mode, Phase, Polarity, Spi},
 };
 
 #[cfg(feature = "stm32f401ccu6")]
 use xtask::bsp::greenpill::hal::pac::I2C1;
 #[cfg(feature = "stm32f427vit6")]
 use xtask::bsp::greenpill::hal::pac::I2C2;
+#[cfg(feature = "stm32f427vit6")]
+use xtask::bsp::greenpill::hal::pac::SPI1;
 
 use xtask::bsp::greenpill::stdout;
 
@@ -30,6 +37,22 @@ pub type I2CBUS = BusManager<
                 Pin<'B', 10, Alternate<4, OpenDrain>>,
                 Pin<'B', 11, Alternate<4, OpenDrain>>,
             ),
+        >,
+    >,
+>;
+
+#[cfg(feature = "stm32f427vit6")]
+pub type SPIBUS = BusManager<
+    NullMutex<
+        Spi<
+            SPI1,
+            (
+                Pin<'A', 5, Alternate<5, PushPull>>,
+                Pin<'A', 6, Alternate<5, PushPull>>,
+                Pin<'A', 7, Alternate<5, PushPull>>,
+            ),
+            TransferModeNormal,
+            Master,
         >,
     >,
 >;
@@ -47,6 +70,7 @@ pub type I2CBUS = BusManager<
     >,
 >;
 static mut I2C: Option<I2CBUS> = None;
+static mut SPI: Option<SPIBUS> = None;
 
 pub unsafe fn init() {
     use xtask::chip::CPU_CLOCK_HZ;
@@ -77,9 +101,9 @@ pub unsafe fn init() {
             }
         }
         #[cfg(feature = "stm32f401ccu6")]
-        led::init_401(gpioc.pc13);
+        led::init(gpioc.pc13);
         #[cfg(feature = "stm32f427vit6")]
-        led::init_427(gpioc.pc6, gpioc.pc7, gpioa.pa8);
+        led::init(gpioc.pc6, gpioc.pc7, gpioa.pa8);
         let channels = (
             gpioa.pa0.into_alternate(),
             gpioa.pa1.into_alternate(),
@@ -133,25 +157,45 @@ pub unsafe fn init() {
                 400.kHz(),
                 &clocks,
             )));
-        }
-        if let Some(bus) = I2C.as_ref() {
-            let i2c = bus.acquire_i2c();
 
-            //陀螺仪
-            #[cfg(feature = "mpu6050")]
-            {
-                #[cfg(feature = "stm32f401ccu6")]
-                mpu6050::init_401(dp.TIM1, i2c, &clocks);
-                #[cfg(feature = "stm32f427vit6")]
-                mpu6050::init_427(dp.TIM1, i2c, &clocks);
-            }
+            let sck = gpioa.pa5.into_alternate();
+            let miso = gpioa.pa6.into_alternate();
+            let mosi = gpioa.pa7.into_alternate().internal_pull_up(true);
+
+            let mode = Mode {
+                polarity: Polarity::IdleLow,
+                phase: Phase::CaptureOnFirstTransition,
+            };
+
+            let spi = Spi::new(dp.SPI1, (sck, miso, mosi), mode, 400.kHz(), &clocks);
+            let bus = BusManagerSimple::new(spi);
+            SPI.replace(bus);
+        }
+        if let Some(bus) = SPI.as_ref() {
+            let ncs = gpioa.pa4.into_push_pull_output();
+            let spi = bus.acquire_spi();
             #[cfg(feature = "mpu9250")]
             {
-                #[cfg(feature = "stm32f401ccu6")]
-                mpu9250::init_401(dp.TIM1, i2c, &clocks);
+                // #[cfg(feature = "stm32f401ccu6")]
+                // mpu9250::init(dp.TIM1, i2c, &clocks);
                 #[cfg(feature = "stm32f427vit6")]
-                mpu9250::init_427(dp.TIM1, i2c, &clocks);
+                mpu9250::init(dp.TIM1, spi, ncs, &clocks);
             }
+            #[cfg(feature = "icm20602")]
+            {
+                #[cfg(feature = "stm32f401ccu6")]
+                icm20602::init(dp.TIM1, i2c, &clocks);
+                #[cfg(feature = "stm32f427vit6")]
+                icm20602::init(dp.TIM1, spi, ncs, &clocks)
+            }
+        }
+        #[cfg(feature = "mpu6050")]
+        if let Some(bus) = I2C.as_ref() {
+            let i2c = bus.acquire_i2c();
+            #[cfg(feature = "stm32f401ccu6")]
+            mpu6050::init(dp.TIM1, i2c, &clocks);
+            #[cfg(feature = "stm32f427vit6")]
+            mpu6050::init(dp.TIM1, i2c, &clocks);
         }
     }
 }

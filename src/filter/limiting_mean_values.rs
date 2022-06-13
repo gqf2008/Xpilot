@@ -18,7 +18,7 @@ pub struct LimitingMeanValuesFilter {
 }
 
 impl LimitingMeanValuesFilter {
-    pub fn new(limit: f32) -> Self {
+    pub const fn new(limit: f32) -> Self {
         Self {
             limit: LimitingFilter::new(limit),
             mv: MeanValueFilter,
