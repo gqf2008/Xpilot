@@ -47,7 +47,7 @@ pid = "3.0.0"
 profont = "0.6.1"
 shared-bus = "0.2.3"
 spin = "0.9.3"
-xtask = {path = "../xtask", features = ["stm32f4"]}
+xtask = {path = "../xtask", features = ["stm32f4","debug_task"]}
 
 [dependencies.nalgebra]
 default-features = false

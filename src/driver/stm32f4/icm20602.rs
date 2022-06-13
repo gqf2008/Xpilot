@@ -101,14 +101,17 @@ pub(crate) unsafe fn init(
     MADGWICK.replace(Madgwick::new(1.0 / sample_rate as f32, 0.1));
     let mut mpu = Builder::new_spi(spi, ncs);
     let mut delay = Delay::new();
-    mpu.setup(&mut delay).ok();
-    MPU.replace(mpu);
-    let mut timer = Timer1::new(tim, clocks).counter_hz();
-    timer.start((sample_rate as u32).Hz()).ok();
-    timer.listen(Event::Update);
-    TIMER.replace(timer);
-    NVIC::unmask(Interrupt::TIM1_UP_TIM10);
-    log::info!("Initialize Icm20602 ok");
+    if let Err(err) = mpu.setup(&mut delay) {
+        log::info!("Initialize Icm20602 {:?}", err);
+    } else {
+        MPU.replace(mpu);
+        let mut timer = Timer1::new(tim, clocks).counter_hz();
+        timer.start((sample_rate as u32).Hz()).ok();
+        timer.listen(Event::Update);
+        TIMER.replace(timer);
+        NVIC::unmask(Interrupt::TIM1_UP_TIM10);
+        log::info!("Initialize Icm20602 ok");
+    }
 }
 
 #[export_name = "TIM1_UP_TIM10"]
