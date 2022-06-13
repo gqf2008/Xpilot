@@ -1,6 +1,5 @@
 use crate::driver::ImuData;
 use crate::filter::dither::DitherFilter;
-use crate::filter::Filter;
 use crate::mbus;
 use ahrs::{Ahrs, Madgwick};
 use icm20689::{Builder, SpiInterface, ICM20689};
@@ -9,7 +8,6 @@ use shared_bus::{NullMutex, SpiProxy};
 #[cfg(feature = "stm32f401ccu6")]
 use xtask::bsp::greenpill::hal::pac::I2C1;
 #[cfg(feature = "stm32f427vit6")]
-use xtask::bsp::greenpill::hal::pac::I2C2;
 use xtask::bsp::greenpill::hal::pac::SPI1;
 
 use xtask::bsp::greenpill::hal::spi::Spi;
@@ -22,8 +20,7 @@ use xtask::bsp::greenpill::hal::{
 use xtask::{
     arch::cortex_m::peripheral::NVIC,
     bsp::greenpill::hal::{
-        gpio::{Alternate, OpenDrain, Pin},
-        i2c::I2c,
+        gpio::{Alternate, Pin},
         pac::{Interrupt, TIM1},
         prelude::*,
         rcc::Clocks,
