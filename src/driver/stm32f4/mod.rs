@@ -23,7 +23,7 @@ use xtask::bsp::greenpill::hal::{
 use xtask::bsp::greenpill::hal::pac::I2C1;
 #[cfg(feature = "stm32f427vit6")]
 use xtask::bsp::greenpill::hal::pac::I2C2;
-#[cfg(feature = "stm32f427vit6")]
+#[cfg(any(feature = "stm32f427vit6", feature = "stm32f401ccu6"))]
 use xtask::bsp::greenpill::hal::pac::SPI1;
 
 use xtask::bsp::greenpill::stdout;
@@ -41,7 +41,7 @@ pub type I2CBUS = BusManager<
     >,
 >;
 
-#[cfg(feature = "stm32f427vit6")]
+#[cfg(any(feature = "stm32f427vit6", feature = "stm32f401ccu6"))]
 pub type SPIBUS = BusManager<
     NullMutex<
         Spi<
@@ -157,7 +157,10 @@ pub unsafe fn init() {
                 400.kHz(),
                 &clocks,
             )));
+        }
 
+        #[cfg(any(feature = "stm32f427vit6", feature = "stm32f401ccu6"))]
+        {
             let sck = gpioa.pa5.into_alternate();
             let miso = gpioa.pa6.into_alternate();
             let mosi = gpioa.pa7.into_alternate().internal_pull_up(true);
@@ -178,7 +181,7 @@ pub unsafe fn init() {
             {
                 // #[cfg(feature = "stm32f401ccu6")]
                 // mpu9250::init(dp.TIM1, i2c, &clocks);
-                #[cfg(feature = "stm32f427vit6")]
+                //#[cfg(feature = "stm32f427vit6")]
                 mpu9250::init(dp.TIM1, spi, ncs, &clocks);
             }
             #[cfg(feature = "icm20602")]
