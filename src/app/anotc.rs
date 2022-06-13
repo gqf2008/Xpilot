@@ -34,9 +34,9 @@ pub fn start() {
 
 fn sync() {
     let mut imu_count = 0u64;
-    // let mut dither_roll = DitherFilter::<10>::new();
-    // let mut dither_pitch = DitherFilter::<10>::new();
-    // let mut dither_yaw = FirstOrderFilter::new(0.001);
+    let mut dither_roll = FirstOrderFilter::new(0.01).chain(DitherFilter::<10>::new());
+    let mut dither_pitch = FirstOrderFilter::new(0.01).chain(DitherFilter::<10>::new());
+    let mut dither_yaw = FirstOrderFilter::new(0.01).chain(DitherFilter::<100>::new());
     let recv: &'static Queue<Message> = unsafe { Q.as_ref().unwrap() };
     let mut buf = vec![0u8; 10];
     buf.push(0xAA);
@@ -64,10 +64,10 @@ fn sync() {
             match msg {
                 Message::ImuData(data) => {
                     if let Some(quat) = data.quaternion {
-                        // let (mut roll, mut pitch, mut yaw) = quat.euler_angles();
-                        // dither_roll.do_filter(roll, &mut roll);
-                        // dither_pitch.do_filter(pitch, &mut pitch);
-                        // dither_yaw.do_filter(yaw, &mut yaw);
+                        let (mut roll, mut pitch, mut yaw) = quat.euler_angles();
+                        dither_roll.do_filter(roll, &mut roll);
+                        dither_pitch.do_filter(pitch, &mut pitch);
+                        dither_yaw.do_filter(yaw, &mut yaw);
                         if imu_count % m == 0 {
                             send_quat(quat);
                             send_euler(quat.euler_angles());
