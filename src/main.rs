@@ -3,6 +3,7 @@
 #![feature(const_mut_refs)]
 #![feature(const_option)]
 #![feature(associated_type_bounds)]
+#![feature(const_fn_floating_point_arithmetic)]
 
 extern crate alloc;
 

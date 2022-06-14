@@ -69,6 +69,23 @@ impl ImuData {
 /// 四元数
 pub type Quaternion = UnitQuaternion<f32>;
 
+//欧拉角转四元数
+pub fn from_euler((roll, pitch, yaw): (f32, f32, f32)) -> (f32, f32, f32, f32) {
+    use libm::*;
+    let cr2 = cosf(roll * 0.5);
+    let cp2 = cosf(pitch * 0.5);
+    let cy2 = cosf(yaw * 0.5);
+    let sr2 = sinf(roll * 0.5);
+    let sp2 = sinf(pitch * 0.5);
+    let sy2 = sinf(yaw * 0.5);
+
+    let q1 = cr2 * cp2 * cy2 + sr2 * sp2 * sy2;
+    let q2 = sr2 * cp2 * cy2 - cr2 * sp2 * sy2;
+    let q3 = cr2 * sp2 * cy2 + sr2 * cp2 * sy2;
+    let q4 = cr2 * cp2 * sy2 - sr2 * sp2 * cy2;
+    (q1, q2, q3, q4)
+}
+
 /// 重力加速度，单位g
 pub type Accel = Vector3<f32>;
 /// 角速度，单位rad/s

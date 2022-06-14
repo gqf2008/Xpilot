@@ -25,10 +25,11 @@ impl Filter<f32, f32> for LimitingFilter {
         if self.value == 0.0 {
             self.value = input;
         }
-        if (input - self.value > self.limit) || (self.value - input > self.limit) {
+        if (input - self.value >= self.limit) || (self.value - input >= self.limit) {
             *output = self.value;
         } else {
             *output = input;
+            self.value = input;
         }
     }
 }

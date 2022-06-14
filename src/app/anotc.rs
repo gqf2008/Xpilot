@@ -1,8 +1,9 @@
 //! 匿名上位机通信协议
 
 use crate::driver::{Accel, Gyro, Quaternion};
-use crate::filter::dither::DitherFilter;
 use crate::filter::first_order::FirstOrderFilter;
+use crate::filter::limiting::LimitingFilter;
+use crate::filter::moving_average::MovingAverageFilter;
 use crate::filter::Filter;
 use crate::mbus::{self, mbus};
 use crate::message::*;
@@ -34,9 +35,11 @@ pub fn start() {
 
 fn sync() {
     let mut imu_count = 0u64;
-    let mut dither_roll = FirstOrderFilter::new(0.01).chain(DitherFilter::<10>::new());
-    let mut dither_pitch = FirstOrderFilter::new(0.01).chain(DitherFilter::<10>::new());
-    let mut dither_yaw = FirstOrderFilter::new(0.01).chain(DitherFilter::<100>::new());
+    let mut dither_roll = FirstOrderFilter::new(0.01).chain(MovingAverageFilter::<50>::new());
+    let mut dither_pitch = FirstOrderFilter::new(0.01).chain(MovingAverageFilter::<50>::new());
+    let mut dither_yaw = LimitingFilter::new(3.0)
+        .chain(FirstOrderFilter::new(0.01))
+        .chain(MovingAverageFilter::<60>::new());
     let recv: &'static Queue<Message> = unsafe { Q.as_ref().unwrap() };
     let mut buf = vec![0u8; 10];
     buf.push(0xAA);
@@ -59,18 +62,22 @@ fn sync() {
     let m = 1;
     #[cfg(any(feature = "mpu6050", feature = "icm20602"))]
     let m = 10;
+
     loop {
         if let Some(msg) = recv.pop_front() {
             match msg {
                 Message::ImuData(data) => {
                     if let Some(quat) = data.quaternion {
-                        let (mut roll, mut pitch, mut yaw) = quat.euler_angles();
-                        dither_roll.do_filter(roll, &mut roll);
-                        dither_pitch.do_filter(pitch, &mut pitch);
-                        dither_yaw.do_filter(yaw, &mut yaw);
+                        let (roll, pitch, yaw) = quat.euler_angles();
+                        let mut froll = 0.0;
+                        let mut fpitch = 0.0;
+                        let mut fyaw = 0.0;
+                        dither_roll.do_filter(roll, &mut froll);
+                        dither_pitch.do_filter(pitch, &mut fpitch);
+                        dither_yaw.do_filter(yaw, &mut fyaw);
                         if imu_count % m == 0 {
                             send_quat(quat);
-                            send_euler(quat.euler_angles());
+                            send_euler((froll, fpitch, fyaw));
                         }
                     }
 
@@ -91,6 +98,7 @@ fn send_quat(quat: Quaternion) {
     buf.push(0xAF);
     buf.push(0x04);
     buf.push(16);
+
     quat.w
         .to_be_bytes()
         .iter()

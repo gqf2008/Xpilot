@@ -167,7 +167,7 @@ pub unsafe fn init() {
                 phase: Phase::CaptureOnFirstTransition,
             };
 
-            let spi = Spi::new(dp.SPI1, (sck, miso, mosi), mode, 400.kHz(), &clocks);
+            let spi = Spi::new(dp.SPI1, (sck, miso, mosi), mode, 4.MHz(), &clocks);
             let bus = BusManagerSimple::new(spi);
             SPI.replace(bus);
         }
