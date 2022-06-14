@@ -3,7 +3,7 @@ use crate::mbus;
 use ahrs::{Ahrs, Madgwick};
 use mpu9250::*;
 use shared_bus::{NullMutex, SpiProxy};
-#[cfg(feature = "stm32f427vit6")]
+#[cfg(any(feature = "stm32f427vit6", feature = "stm32f401ccu6"))]
 use xtask::bsp::greenpill::hal::pac::SPI1;
 use xtask::bsp::greenpill::hal::timer::CounterHz;
 use xtask::bsp::greenpill::hal::{
@@ -23,7 +23,7 @@ use xtask::{
     },
 };
 
-#[cfg(feature = "stm32f427vit6")]
+#[cfg(any(feature = "stm32f427vit6", feature = "stm32f401ccu6"))]
 static mut MPU: Option<
     Mpu9250<
         SpiDevice<
@@ -49,7 +49,7 @@ static mut MPU: Option<
 static mut TIMER: Option<CounterHz<TIM1>> = None;
 static mut MADGWICK: Option<Madgwick<f32>> = None;
 
-#[cfg(feature = "stm32f427vit6")]
+#[cfg(any(feature = "stm32f427vit6", feature = "stm32f401ccu6"))]
 pub(crate) unsafe fn init(
     tim: TIM1,
     spi: SpiProxy<
