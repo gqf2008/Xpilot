@@ -25,7 +25,7 @@ pub unsafe fn init(pin: Pin<'C', 13>) {
     log::info!("Initialize led");
     let led = Led::new(pin);
     LED.replace(led);
-    mbus::mbus()
+    mbus::bus()
         .register("/led/r/on", |_, _| {
             if let Some(led) = LED.as_mut() {
                 led.on();
@@ -83,7 +83,7 @@ pub unsafe fn init(red: Pin<'C', 6>, green: Pin<'C', 7>, blue: Pin<'A', 8>) {
     GREEN.replace(led);
     let led = Led427::new(blue.into_push_pull_output());
     BLUE.replace(led);
-    mbus::mbus()
+    mbus::bus()
         .register("/led/r/on", |_, _| {
             if let Some(led) = RED.as_mut() {
                 led.on();

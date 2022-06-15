@@ -4,7 +4,7 @@ mod gd32vf103;
 pub use gd32vf103::{bldc, led, mpu6050, serial, servo};
 
 #[cfg(any(feature = "stm32f401ccu6", feature = "stm32f427vit6"))]
-mod stm32f4;
+pub mod stm32f4;
 
 pub mod bldc;
 pub mod mpu6050;
@@ -44,9 +44,8 @@ pub struct ImuData {
 }
 
 impl ImuData {
-    pub fn quate(mut self, quat: UnitQuaternion<f32>) -> Self {
+    pub fn quate(&mut self, quat: UnitQuaternion<f32>) {
         self.quaternion = Some(quat);
-        self
     }
     pub fn accel(mut self, accel: Accel) -> Self {
         self.accel = Some(accel);

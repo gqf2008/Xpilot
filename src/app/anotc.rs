@@ -5,7 +5,7 @@ use crate::filter::first_order::FirstOrderFilter;
 use crate::filter::limiting::LimitingFilter;
 use crate::filter::moving_average::MovingAverageFilter;
 use crate::filter::Filter;
-use crate::mbus::{self, mbus};
+use crate::mbus::{self};
 use crate::message::*;
 use alloc::vec;
 use xtask::bsp::greenpill::stdout;
@@ -22,7 +22,7 @@ pub fn start() {
         .name("anotc")
         .stack_size(2024)
         .spawn(|| sync());
-    mbus().subscribe("/imu", move |_, msg| match msg {
+    mbus::bus().subscribe("/imu", move |_, msg| match msg {
         Message::ImuData(_) => {
             let q: &'static Queue<Message> = unsafe { Q.as_ref().unwrap() };
             if let Err(err) = q.push_back_isr(msg) {
@@ -82,7 +82,7 @@ fn sync() {
                     }
 
                     if imu_count % (m * 10) == 0 {
-                        mbus::mbus().call("/led/b/toggle", Message::None);
+                        mbus::bus().call("/led/b/toggle", Message::None);
                     }
                     imu_count += 1;
                 }

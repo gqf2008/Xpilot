@@ -55,7 +55,6 @@ pub type MPU = Mpu6050<
 
 static mut MPU: Option<MPU> = None;
 static mut TIMER: Option<CounterHz<TIM1>> = None;
-static mut MADGWICK: Option<Madgwick<f32>> = None;
 
 #[cfg(feature = "stm32f401ccu6")]
 pub(crate) unsafe fn init(
@@ -75,8 +74,6 @@ pub(crate) unsafe fn init(
     clocks: &Clocks,
 ) {
     log::info!("Initialize mpu6050");
-    let sample_rate = 1000;
-    MADGWICK.replace(Madgwick::new(1.0 / sample_rate as f32, 0.1));
     match Mpu6050::new(i2c).with_sample_rate(sample_rate).build() {
         Ok(mpu) => {
             MPU.replace(mpu);
@@ -140,23 +137,11 @@ unsafe fn timer_isr() {
     static mut AX_FILTER: DitherFilter<100> = DitherFilter::<100>::new();
     static mut AY_FILTER: DitherFilter<100> = DitherFilter::<100>::new();
     static mut AZ_FILTER: DitherFilter<100> = DitherFilter::<100>::new();
-    let ahrs = MADGWICK.as_mut().unwrap();
     xtask::sync::free(|_| {
         if let Some(mpu) = MPU.as_mut() {
             match mpu.accel_gyro() {
                 Ok(data) => {
-                    let mut gyro = data.gyro.unwrap();
-                    // GX_FILTER.do_filter(gyro[0], &mut gyro[0]);
-                    // GY_FILTER.do_filter(gyro[1], &mut gyro[1]);
-                    // GZ_FILTER.do_filter(gyro[2], &mut gyro[2]);
-                    let mut acc = data.accel.unwrap();
-                    // AX_FILTER.do_filter(acc[0], &mut acc[0]);
-                    // AY_FILTER.do_filter(acc[1], &mut acc[1]);
-                    // AZ_FILTER.do_filter(acc[2], &mut acc[2]);
-                    if let Ok(quat) = ahrs.update_imu(&gyro, &acc) {
-                        let data = data.quate(*quat);
-                        mbus::mbus().publish_isr("/imu", crate::message::Message::ImuData(data));
-                    }
+                    mbus::bus().call_isr("/imu/raw", crate::message::Message::ImuData(data));
                 }
                 Err(err) => {
                     log::error!("mpu6050 error {:?}", err);

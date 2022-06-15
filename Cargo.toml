@@ -6,7 +6,7 @@ version = "0.1.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
 # 默认
-default = ["stm32f401ccu6", "mpu9250", "anotc", "heli"]
+default = ["stm32f427vit6", "mpu9250", "anotc", "heli"]
 # chip
 gd32vf103 = []
 stm32f401ccu6 = []

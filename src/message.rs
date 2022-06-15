@@ -2,6 +2,7 @@ use crate::driver::{Accel, Barometer, Compass, Distance, Gps, Gyro, ImuData};
 
 #[derive(Debug, Clone, Copy)]
 pub enum Message {
+    DataReady,
     ImuData(ImuData),
     // 角度
     Gyro(Gyro),

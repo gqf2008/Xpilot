@@ -5,18 +5,23 @@ pub mod led;
 pub mod mpu6050;
 #[cfg(feature = "mpu9250")]
 pub mod mpu9250;
+pub mod nvic;
+pub mod serial;
 
 use shared_bus::{BusManager, BusManagerSimple, NullMutex};
 use xtask::bsp::greenpill::hal::{
-    gpio::PushPull,
-    spi::{Master, TransferModeNormal},
-};
-use xtask::bsp::greenpill::hal::{
+    dma::StreamsTuple,
     gpio::{Alternate, OpenDrain, Pin},
     i2c::I2c,
     pac,
     prelude::*,
     spi::{Mode, Phase, Polarity, Spi},
+};
+use xtask::bsp::greenpill::hal::{
+    flash::FlashExt,
+    gpio::PushPull,
+    serial::config::{Config, DmaConfig},
+    spi::{Master, TransferModeNormal},
 };
 
 #[cfg(feature = "stm32f401ccu6")]
@@ -78,7 +83,8 @@ pub unsafe fn init() {
     use xtask::chip::TICK_CLOCK_HZ;
     log::info!("CPU_CLOCK {}Hz", CPU_CLOCK_HZ);
     log::info!("SYSTICK_CLOCK {}Hz", SYSTICK_CLOCK_HZ);
-    log::info!("OS_TICK_CLOCK {}Hz", TICK_CLOCK_HZ);
+    log::info!("OSTICK_CLOCK {}Hz", TICK_CLOCK_HZ);
+
     if let Some(dp) = pac::Peripherals::take() {
         let rcc = dp.RCC.constrain();
         let clocks = rcc
@@ -89,17 +95,31 @@ pub unsafe fn init() {
         let gpioa = dp.GPIOA.split();
         let gpiob = dp.GPIOB.split();
         let gpioc = dp.GPIOC.split();
-        match dp
-            .USART1
-            .tx(gpioa.pa9.into_alternate(), 115200.bps(), &clocks)
-        {
-            Ok(tx) => {
+
+        let streams = StreamsTuple::new(dp.DMA1);
+        let stream = streams.4;
+
+        match dp.USART1.serial(
+            (gpioa.pa9.into_alternate(), gpioa.pa10.into_alternate()),
+            Config::default().dma(DmaConfig::Rx).baudrate(460800.bps()),
+            &clocks,
+        ) {
+            Ok(serial) => {
+                let (tx, rx) = serial.split();
                 stdout::use_tx1(tx);
+                serial::init(rx);
             }
             Err(err) => {
                 panic!("{:?}", err);
             }
         }
+
+        log::info!(
+            "Flash Address:0x{:x},Length={}, DualBank:{}",
+            dp.FLASH.address(),
+            dp.FLASH.len(),
+            dp.FLASH.dual_bank()
+        );
         #[cfg(feature = "stm32f401ccu6")]
         led::init(gpioc.pc13);
         #[cfg(feature = "stm32f427vit6")]

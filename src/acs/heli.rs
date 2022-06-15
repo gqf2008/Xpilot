@@ -1,5 +1,4 @@
 use crate::mbus;
-use crate::mbus::mbus;
 use crate::message::*;
 use xtask::{Queue, TaskBuilder};
 
@@ -11,7 +10,7 @@ pub fn start() {
         .priority(1)
         .stack_size(1024)
         .spawn(move || sampling(q));
-    mbus().subscribe("/imu", move |_, msg| {
+    mbus::bus().subscribe("/imu", move |_, msg| {
         if let Err(err) = sender.push_back_isr(msg) {
             log::error!("error {:?}", err);
         }
@@ -29,7 +28,7 @@ fn sampling(recv: Queue<Message>) {
             match msg {
                 Message::ImuData(data) => {
                     if imu_count % m == 0 {
-                        mbus::mbus().call("/led/r/toggle", Message::None);
+                        mbus::bus().call("/led/r/toggle", Message::None);
                         //log::info!("{:?}", data);
                     }
                     imu_count += 1;

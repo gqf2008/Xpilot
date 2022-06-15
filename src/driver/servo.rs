@@ -35,6 +35,6 @@ impl<PWM: PwmPin<Duty = u16>> Servo<PWM> {
     pub fn set_duty(&mut self, duty: f32) {
         self.pwm
             .set_duty((self.pwm.get_max_duty() as f32 * duty) as u16);
-        mbus::mbus().call("/led/g/toggle", Message::None);
+        mbus::bus().call("/led/g/toggle", Message::None);
     }
 }
