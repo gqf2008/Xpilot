@@ -111,14 +111,7 @@ unsafe fn timer_isr() {
     if let Some(timer) = TIMER.as_mut() {
         timer.clear_interrupt(Event::Update);
     }
-    mbus::bus().call_isr("/imu/raw", crate::message::Message::DataReady);
-    // if let Some(mpu) = MPU.as_mut() {
-    //     if let Ok(all) = mpu.all::<[f32; 3]>() {
-    //         let acc = Accel::new(all.accel[0], all.accel[1], all.accel[2]);
-    //         let gyro = Gyro::new(all.gyro[0], all.gyro[1], all.gyro[2]);
-    //         let mag = Compass::new(all.mag[0], all.mag[1], all.mag[2]);
-    //         let data = ImuData::default().accel(acc).gyro(gyro).compass(mag);
-    //         mbus::bus().call_isr("/imu/raw", crate::message::Message::ImuData(data));
-    //     }
-    // }
+    xtask::sync::free(|_| {
+        mbus::bus().publish_isr("/imu/raw", crate::message::Message::DataReady);
+    })
 }

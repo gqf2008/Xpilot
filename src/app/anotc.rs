@@ -20,7 +20,7 @@ pub fn start() {
     }
     TaskBuilder::new()
         .name("anotc")
-        .stack_size(2024)
+        .stack_size(1024)
         .spawn(|| sync());
     mbus::bus().subscribe("/imu", move |_, msg| match msg {
         Message::ImuData(_) => {
@@ -55,9 +55,7 @@ fn sync() {
         .fold((0u8, 0u8), |(sum, check), b| (sum + *b, check + sum + *b));
     buf.push(sum);
     buf.push(check);
-    sync::free(|_| {
-        stdout::write(&buf).ok();
-    });
+    mbus::bus().call("/telem/tx", Message::Telem(Telem::Multiwii(buf)));
     #[cfg(feature = "mpu9250")]
     let m = 1;
     #[cfg(any(feature = "mpu6050", feature = "icm20602"))]
@@ -112,9 +110,7 @@ fn send_quat(quat: Quaternion) {
         .fold((0u8, 0u8), |(sum, check), b| (sum + *b, check + sum + *b));
     buf.push(sum);
     buf.push(check);
-    sync::free(|_| {
-        stdout::write(&buf).ok();
-    });
+    mbus::bus().call("/telem/tx", Message::Telemetry(Telemetry::Multiwii(buf)));
 }
 
 fn send_euler((roll, pitch, yaw): (f32, f32, f32)) {
@@ -136,9 +132,7 @@ fn send_euler((roll, pitch, yaw): (f32, f32, f32)) {
         .fold((0u8, 0u8), |(sum, check), b| (sum + *b, check + sum + *b));
     buf.push(sum);
     buf.push(check);
-    sync::free(|_| {
-        stdout::write(&buf).ok();
-    });
+    mbus::bus().call("/telem/tx", Message::Telemetry(Telemetry::Multiwii(buf)));
 }
 
 fn _send_accel_gyro(accel: Accel, gyro: Gyro) {
@@ -159,7 +153,5 @@ fn _send_accel_gyro(accel: Accel, gyro: Gyro) {
         .fold((0u8, 0u8), |(sum, check), b| (sum + *b, check + sum + *b));
     buf.push(sum);
     buf.push(check);
-    sync::free(|_| {
-        stdout::write(&buf).ok();
-    });
+    mbus::bus().call("/telem/tx", Message::Telemetry(Telemetry::Multiwii(buf)));
 }

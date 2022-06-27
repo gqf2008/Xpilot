@@ -1,4 +1,4 @@
-//! 惯性测量单元
+//! 惯性测量单元，接收陀螺仪、加速度计、磁力计数据，融合计算输出欧拉角
 //!
 use crate::{
     driver::{Accel, Compass, Gyro, ImuData},
@@ -19,7 +19,7 @@ pub fn start() {
         IMU.replace(InertialMeasurementUnit {
             ahrs: Madgwick::new(1.0 / 100.0, 0.1),
         });
-        mbus::bus().register_isr("/imu/raw", |_, _| {
+        mbus::bus().subscribe("/imu/raw", |_, _| {
             if let Some(q) = Q.as_mut() {
                 q.push_back_isr(()).ok();
             }

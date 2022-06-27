@@ -6,7 +6,7 @@ version = "0.1.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
 # 默认
-default = ["stm32f427vit6", "mpu9250", "anotc", "heli"]
+default = ["stm32f427vit6", "mpu9250", "msp"]
 # chip
 gd32vf103 = []
 stm32f401ccu6 = []
@@ -33,7 +33,7 @@ crossbeam = {version = "0.8.1", default-features = false, features = ["alloc"]}
 # drogue-esp8266 = "0.3.1"
 embedded-hal = "0.2.3"
 # heapless = "0.7"
-icm20689 = {git = "https://github.com/tstellanova/icm20689.git"}
+# icm20689 = {git = "https://github.com/tstellanova/icm20689.git"}
 lazy_static = {version = "1.4.0", default-features = false, features = ["spin_no_std"]}
 libm = "0.2.2"
 log = "0.4.17"
@@ -47,9 +47,17 @@ pid = "3.0.0"
 profont = "0.6.1"
 shared-bus = "0.2.3"
 spin = "0.9.3"
-xtask = {path = "../xtask", features = ["stm32f4"]}
+xtask = {path = "../xtask",  default-features = false, features = ["stm32f4","xtask_executor", "xtask_scheduler", "rtt_log"]}
 
 [dependencies.nalgebra]
 default-features = false
 features = ["libm-force"]
 version = "0.30"
+
+
+[profile.release]
+codegen-units = 1
+debug = true
+lto = true
+# strip = true
+opt-level = "z"

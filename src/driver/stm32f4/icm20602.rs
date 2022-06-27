@@ -68,7 +68,6 @@ pub type MPU = ICM20689<
 
 static mut MPU: Option<MPU> = None;
 static mut TIMER: Option<CounterHz<TIM1>> = None;
-static mut MADGWICK: Option<Madgwick<f32>> = None;
 
 #[cfg(feature = "stm32f427vit6")]
 pub(crate) unsafe fn init(
@@ -116,13 +115,6 @@ unsafe fn timer_isr() {
     if let Some(timer) = TIMER.as_mut() {
         timer.clear_interrupt(Event::Update);
     }
-    static mut GX_FILTER: DitherFilter<100> = DitherFilter::<100>::new();
-    static mut GY_FILTER: DitherFilter<100> = DitherFilter::<100>::new();
-    static mut GZ_FILTER: DitherFilter<100> = DitherFilter::<100>::new();
-    static mut AX_FILTER: DitherFilter<100> = DitherFilter::<100>::new();
-    static mut AY_FILTER: DitherFilter<100> = DitherFilter::<100>::new();
-    static mut AZ_FILTER: DitherFilter<100> = DitherFilter::<100>::new();
-    let ahrs = MADGWICK.as_mut().unwrap();
     xtask::sync::free(|_| {
         if let Some(mpu) = MPU.as_mut() {
             match mpu.get_scaled_accel() {
@@ -131,11 +123,7 @@ unsafe fn timer_isr() {
                         let acc = Vector3::new(acc[0], acc[1], acc[2]);
                         let gyro = Vector3::new(gyro[0], gyro[1], gyro[2]);
                         let data = ImuData::default().gyro(gyro).accel(acc);
-                        if let Ok(quat) = ahrs.update_imu(&gyro, &acc) {
-                            let data = data.quate(*quat);
-                            mbus::mbus()
-                                .publish_isr("/imu", crate::message::Message::ImuData(data));
-                        }
+                        mbus::mbus().publish_isr("/imu", crate::message::Message::ImuData(data));
                     }
                     Err(err) => {
                         log::error!("Icm20602 error {:?}", err);

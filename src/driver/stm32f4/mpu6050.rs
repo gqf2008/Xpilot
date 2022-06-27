@@ -131,17 +131,11 @@ unsafe fn timer_isr() {
     if let Some(timer) = TIMER.as_mut() {
         timer.clear_interrupt(Event::Update);
     }
-    static mut GX_FILTER: DitherFilter<100> = DitherFilter::<100>::new();
-    static mut GY_FILTER: DitherFilter<100> = DitherFilter::<100>::new();
-    static mut GZ_FILTER: DitherFilter<100> = DitherFilter::<100>::new();
-    static mut AX_FILTER: DitherFilter<100> = DitherFilter::<100>::new();
-    static mut AY_FILTER: DitherFilter<100> = DitherFilter::<100>::new();
-    static mut AZ_FILTER: DitherFilter<100> = DitherFilter::<100>::new();
     xtask::sync::free(|_| {
         if let Some(mpu) = MPU.as_mut() {
             match mpu.accel_gyro() {
                 Ok(data) => {
-                    mbus::bus().call_isr("/imu/raw", crate::message::Message::ImuData(data));
+                    mbus::bus().publish_isr("/imu/raw", crate::message::Message::ImuData(data));
                 }
                 Err(err) => {
                     log::error!("mpu6050 error {:?}", err);

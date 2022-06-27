@@ -6,7 +6,7 @@ pub mod mpu6050;
 #[cfg(feature = "mpu9250")]
 pub mod mpu9250;
 pub mod nvic;
-pub mod serial;
+pub mod telem;
 
 use shared_bus::{BusManager, BusManagerSimple, NullMutex};
 use xtask::bsp::greenpill::hal::{
@@ -96,18 +96,14 @@ pub unsafe fn init() {
         let gpiob = dp.GPIOB.split();
         let gpioc = dp.GPIOC.split();
 
-        let streams = StreamsTuple::new(dp.DMA1);
-        let stream = streams.4;
-
         match dp.USART1.serial(
             (gpioa.pa9.into_alternate(), gpioa.pa10.into_alternate()),
-            Config::default().dma(DmaConfig::Rx).baudrate(460800.bps()),
+            Config::default().baudrate(115200.bps()),
             &clocks,
         ) {
             Ok(serial) => {
                 let (tx, rx) = serial.split();
-                stdout::use_tx1(tx);
-                serial::init(rx);
+                telem::init(rx, tx);
             }
             Err(err) => {
                 panic!("{:?}", err);
@@ -199,9 +195,6 @@ pub unsafe fn init() {
             let spi = bus.acquire_spi();
             #[cfg(feature = "mpu9250")]
             {
-                // #[cfg(feature = "stm32f401ccu6")]
-                // mpu9250::init(dp.TIM1, i2c, &clocks);
-                //#[cfg(feature = "stm32f427vit6")]
                 mpu9250::init(dp.TIM1, spi, ncs, &clocks);
             }
             #[cfg(feature = "icm20602")]

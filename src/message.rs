@@ -1,6 +1,8 @@
+use alloc::vec::Vec;
+
 use crate::driver::{Accel, Barometer, Compass, Distance, Gps, Gyro, ImuData};
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub enum Message {
     DataReady,
     ImuData(ImuData),
@@ -17,8 +19,16 @@ pub enum Message {
     Gps(Gps),
     //控制信号
     Control(Signal),
-
+    //遥测协议
+    Telem(Telem),
     None,
+}
+
+//
+#[derive(Debug, Clone)]
+pub enum Telem {
+    Multiwii(Vec<u8>),
+    Mavlink(Vec<u8>),
 }
 
 #[derive(Debug, Clone, Copy)]
