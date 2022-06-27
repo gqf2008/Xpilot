@@ -1,7 +1,5 @@
 use super::nvic::NVICExt;
-use crate::driver::{Accel, Compass, Gyro, ImuData};
 use crate::mbus;
-use ahrs::{Ahrs, Madgwick};
 use mpu9250::*;
 use shared_bus::{NullMutex, SpiProxy};
 #[cfg(any(feature = "stm32f427vit6", feature = "stm32f401ccu6"))]
@@ -48,7 +46,6 @@ pub type MPU = Mpu9250<
 #[cfg(any(feature = "stm32f427vit6", feature = "stm32f401ccu6"))]
 static mut MPU: Option<MPU> = None;
 static mut TIMER: Option<CounterHz<TIM1>> = None;
-static mut MADGWICK: Option<Madgwick<f32>> = None;
 
 #[cfg(any(feature = "stm32f427vit6", feature = "stm32f401ccu6"))]
 pub(crate) unsafe fn init(
@@ -73,20 +70,12 @@ pub(crate) unsafe fn init(
 ) {
     log::info!("Initialize mpu9250");
     let sample_rate = 100;
-    MADGWICK.replace(Madgwick::new(1.0 / sample_rate as f32, 0.1));
     let mut delay = Delay::new();
-
     match Mpu9250::marg_default(spi, ncs, &mut delay) {
         Ok(mut mpu) => {
-            let who_am_i = mpu.who_am_i().expect("could not read WHO_AM_I");
-            let mag_who_am_i = mpu
-                .ak8963_who_am_i()
-                .expect("could not read magnetometer's WHO_AM_I");
-            log::info!("WHO_AM_I: 0x{:x}", who_am_i);
-            log::info!("AK8963 WHO_AM_I: 0x{:x}", mag_who_am_i);
-
+            //校准
             if let Err(err) = mpu.calibrate_at_rest::<_, [f32; 3]>(&mut delay) {
-                log::info!("calibrate_at_rest {:?}", err);
+                log::error!("calibrate_at_rest {:?}", err);
             }
             MPU.replace(mpu);
             let mut timer = Timer1::new(tim, clocks).counter_hz();

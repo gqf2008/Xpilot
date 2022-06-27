@@ -10,18 +10,17 @@ pub mod telem;
 
 use shared_bus::{BusManager, BusManagerSimple, NullMutex};
 use xtask::bsp::greenpill::hal::{
-    dma::StreamsTuple,
+    flash::FlashExt,
+    gpio::PushPull,
+    serial::config::Config,
+    spi::{Master, TransferModeNormal},
+};
+use xtask::bsp::greenpill::hal::{
     gpio::{Alternate, OpenDrain, Pin},
     i2c::I2c,
     pac,
     prelude::*,
     spi::{Mode, Phase, Polarity, Spi},
-};
-use xtask::bsp::greenpill::hal::{
-    flash::FlashExt,
-    gpio::PushPull,
-    serial::config::{Config, DmaConfig},
-    spi::{Master, TransferModeNormal},
 };
 
 #[cfg(feature = "stm32f401ccu6")]
@@ -30,8 +29,6 @@ use xtask::bsp::greenpill::hal::pac::I2C1;
 use xtask::bsp::greenpill::hal::pac::I2C2;
 #[cfg(any(feature = "stm32f427vit6", feature = "stm32f401ccu6"))]
 use xtask::bsp::greenpill::hal::pac::SPI1;
-
-use xtask::bsp::greenpill::stdout;
 
 #[cfg(feature = "stm32f427vit6")]
 pub type I2CBUS = BusManager<

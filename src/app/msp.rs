@@ -10,8 +10,8 @@ use crate::filter::Filter;
 use crate::mbus::{self};
 use crate::message::*;
 use alloc::vec;
-use xtask::bsp::greenpill::stdout;
-use xtask::{sync, Queue, TaskBuilder};
+
+use xtask::{Queue, TaskBuilder};
 
 static mut Q: Option<Queue<Message>> = None;
 
