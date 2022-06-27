@@ -11,6 +11,7 @@ mod acs;
 mod app;
 mod driver;
 mod filter;
+mod fsm;
 mod mbus;
 mod message;
 
