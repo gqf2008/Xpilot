@@ -16,6 +16,7 @@ pub enum Message {
     Barometer(Barometer),
 
     Distance(Distance),
+
     Gps(Gps),
     //控制信号
     Control(Signal),
@@ -31,7 +32,7 @@ pub enum Telem {
     Mavlink(Vec<u8>),
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub enum Signal {
     Led,
     Motor {},
