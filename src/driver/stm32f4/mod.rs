@@ -6,6 +6,7 @@ pub mod mpu6050;
 #[cfg(feature = "mpu9250")]
 pub mod mpu9250;
 pub mod nvic;
+pub mod sbus;
 pub mod telem;
 
 use shared_bus::{BusManager, BusManagerSimple, NullMutex};
@@ -98,7 +99,7 @@ pub unsafe fn init() {
         let gpioa = dp.GPIOA.split();
         let gpiob = dp.GPIOB.split();
         let gpioc = dp.GPIOC.split();
-
+        let gpiod = dp.GPIOD.split();
         match dp.USART1.serial(
             (gpioa.pa9.into_alternate(), gpioa.pa10.into_alternate()),
             Config::default().baudrate(115200.bps()).dma(DC::Rx),
@@ -107,6 +108,19 @@ pub unsafe fn init() {
             Ok(serial) => {
                 let (tx, rx) = serial.split();
                 telem::init(rx, tx, dp.DMA2);
+            }
+            Err(err) => {
+                panic!("{:?}", err);
+            }
+        }
+
+        match dp.USART3.rx(
+            gpiod.pd9.into_alternate(),
+            Config::default().baudrate(100000.bps()).dma(DC::Rx),
+            &clocks,
+        ) {
+            Ok(rx) => {
+                sbus::init(rx, dp.DMA1);
             }
             Err(err) => {
                 panic!("{:?}", err);

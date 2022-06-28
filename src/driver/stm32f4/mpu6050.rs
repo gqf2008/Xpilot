@@ -131,16 +131,15 @@ unsafe fn timer_isr() {
     if let Some(timer) = TIMER.as_mut() {
         timer.clear_interrupt(Event::Update);
     }
-    xtask::sync::free(|_| {
-        if let Some(mpu) = MPU.as_mut() {
-            match mpu.accel_gyro() {
-                Ok(data) => {
-                    mbus::bus().publish_isr("/imu/raw", crate::message::Message::ImuData(data));
-                }
-                Err(err) => {
-                    log::error!("mpu6050 error {:?}", err);
-                }
+
+    if let Some(mpu) = MPU.as_mut() {
+        match mpu.accel_gyro() {
+            Ok(data) => xtask::sync::free(|_| {
+                mbus::bus().publish_isr("/imu/raw", crate::message::Message::ImuData(data));
+            }),
+            Err(err) => {
+                log::error!("mpu6050 error {:?}", err);
             }
         }
-    })
+    }
 }
