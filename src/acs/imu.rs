@@ -1,13 +1,12 @@
 //! 惯性测量单元，接收陀螺仪、加速度计、磁力计数据，融合计算输出欧拉角
 //!
-use crate::{
-    driver::{Accel, Compass, Gyro, ImuData},
-    mbus,
-    message::Message,
-};
+use crate::acs::filter::first_order::FirstOrderFilter;
+use crate::acs::filter::limiting::LimitingFilter;
+use crate::acs::filter::moving_average::MovingAverageFilter;
+use crate::acs::filter::Filter;
+use crate::{driver::ImuData, mbus, message::Message};
 use ahrs::{Ahrs, Madgwick};
 use xtask::{Queue, TaskBuilder};
-
 static mut IMU: Option<InertialMeasurementUnit> = None;
 
 static mut Q: Option<Queue<ImuData>> = None;
@@ -33,11 +32,25 @@ pub fn start() {
         .priority(1)
         .stack_size(1024)
         .spawn(|| unsafe {
+            let mut dither_roll =
+                FirstOrderFilter::new(0.01).chain(MovingAverageFilter::<50>::new());
+            let mut dither_pitch =
+                FirstOrderFilter::new(0.01).chain(MovingAverageFilter::<50>::new());
+            let mut dither_yaw = LimitingFilter::new(3.0)
+                .chain(FirstOrderFilter::new(0.01))
+                .chain(MovingAverageFilter::<60>::new());
             loop {
                 if let Some(q) = Q.as_mut() {
                     if let Some(mut data) = q.pop_front() {
                         if let Some(imu) = IMU.as_mut() {
                             imu.update(&mut data);
+                            // let (roll, pitch, yaw) = quat.euler_angles();
+                            // let mut froll = 0.0;
+                            // let mut fpitch = 0.0;
+                            // let mut fyaw = 0.0;
+                            // dither_roll.do_filter(roll, &mut froll);
+                            // dither_pitch.do_filter(pitch, &mut fpitch);
+                            // dither_yaw.do_filter(yaw, &mut fyaw);
                             mbus::bus().publish("/imu", Message::ImuData(data));
                         }
                     }

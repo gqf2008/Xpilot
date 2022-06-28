@@ -1,3 +1,4 @@
+use crate::fsm::Machine;
 use crate::mbus;
 use crate::message::*;
 use xtask::{Queue, TaskBuilder};
@@ -10,7 +11,7 @@ pub fn start() {
         .priority(1)
         .stack_size(1024)
         .spawn(move || sampling(q));
-    mbus::bus().subscribe("/imu", move |_, msg| {
+    mbus::bus().subscribe("/rc", move |_, msg| {
         if let Err(err) = sender.push_back_isr(msg) {
             log::error!("error {:?}", err);
         }
@@ -29,7 +30,6 @@ fn sampling(recv: Queue<Message>) {
                 Message::ImuData(data) => {
                     if imu_count % m == 0 {
                         mbus::bus().call("/led/r/toggle", Message::None);
-                        //log::info!("{:?}", data);
                     }
                     imu_count += 1;
                 }
@@ -38,4 +38,34 @@ fn sampling(recv: Queue<Message>) {
             }
         }
     }
+}
+
+// 状态
+pub enum State {
+    Locked,       //锁定
+    Unlocked,     //解锁
+    Roll,         //翻滚
+    Stall,        //失速
+    OutOfControl, //失控
+    Hover,        //悬停
+    TurnLeft,     //左转
+    TrunRight,    //右转
+    ReturnFlight, //返航
+    MoveForward,  //前进
+    MoveLeft,     //向左
+    MoveRight,    //向右
+    MoveBack,     //后退
+    Autopilot,    //自动驾驶
+    Following,    //跟随
+}
+
+pub enum Event {}
+
+// 直升机
+pub struct Helix {
+    fsm: Machine<State, Message>,
+    speed: u32,           //速度
+    height: u32,          //高度
+    course: u32,          //航向
+    position: (f32, f32), //当前位置
 }

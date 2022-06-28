@@ -3,10 +3,7 @@
 ///
 ///
 use crate::driver::{Accel, Gyro, Quaternion};
-use crate::filter::first_order::FirstOrderFilter;
-use crate::filter::limiting::LimitingFilter;
-use crate::filter::moving_average::MovingAverageFilter;
-use crate::filter::Filter;
+
 use crate::mbus::{self};
 use crate::message::*;
 use alloc::vec;
@@ -48,11 +45,7 @@ pub fn start() {
 
 fn sync() {
     let mut imu_count = 0u64;
-    let mut dither_roll = FirstOrderFilter::new(0.01).chain(MovingAverageFilter::<50>::new());
-    let mut dither_pitch = FirstOrderFilter::new(0.01).chain(MovingAverageFilter::<50>::new());
-    let mut dither_yaw = LimitingFilter::new(3.0)
-        .chain(FirstOrderFilter::new(0.01))
-        .chain(MovingAverageFilter::<60>::new());
+
     let recv: &'static Queue<Message> = unsafe { Q.as_ref().unwrap() };
     let mut buf = vec![0u8; 10];
     buf.push(0xAA);
@@ -84,9 +77,9 @@ fn sync() {
                         let mut froll = 0.0;
                         let mut fpitch = 0.0;
                         let mut fyaw = 0.0;
-                        dither_roll.do_filter(roll, &mut froll);
-                        dither_pitch.do_filter(pitch, &mut fpitch);
-                        dither_yaw.do_filter(yaw, &mut fyaw);
+                        // dither_roll.do_filter(roll, &mut froll);
+                        // dither_pitch.do_filter(pitch, &mut fpitch);
+                        // dither_yaw.do_filter(yaw, &mut fyaw);
                         if imu_count % m == 0 {
                             send_quat(quat);
                             send_euler((froll, fpitch, fyaw));

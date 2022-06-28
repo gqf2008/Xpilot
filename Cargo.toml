@@ -6,7 +6,7 @@ version = "0.1.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
 # 默认
-default = ["stm32f427vit6", "mpu9250", "msp"]
+default = ["stm32f427vit6", "mpu9250", "msp","helix"]
 # chip
 gd32vf103 = []
 stm32f401ccu6 = []
@@ -21,7 +21,7 @@ mavlink = []
 msp = []
 # Attitude Control System
 fixed = [] # 固定翼
-heli = [] # 直升机
+helix = [] # 直升机
 multi-rotor = [] #多旋翼
 
 [dependencies]

@@ -1,7 +1,5 @@
 #[cfg(feature = "anotc")]
 mod anotc;
-#[cfg(feature = "heli")]
-mod heli;
 #[cfg(feature = "mavlink")]
 mod mavlink;
 #[cfg(feature = "msp")]
