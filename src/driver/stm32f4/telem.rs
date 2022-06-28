@@ -4,7 +4,6 @@ use crate::message::{Message, Telem};
 use super::nvic::NVICExt;
 use core::cell::RefCell;
 use cortex_m::interrupt::Mutex;
-
 use embedded_hal::serial::Write;
 use xtask::arch::cortex_m;
 use xtask::bsp::greenpill::hal::pac::DMA2;
@@ -19,7 +18,7 @@ use xtask::{
         config::DmaConfig, traits::StreamISR, PeripheralToMemory, Stream5, StreamsTuple, Transfer,
     },
 };
-const DMA_BUFFER_SIZE: usize = 1024;
+const DMA_BUFFER_SIZE: usize = 256;
 
 static mut TX: Option<Tx<USART1, u8>> = None;
 static mut DMA: Mutex<RefCell<Option<RxDma>>> = Mutex::new(RefCell::new(None));
@@ -50,7 +49,7 @@ pub unsafe fn init(rx: Rx<USART1, u8>, tx: Tx<USART1, u8>, dma: DMA2) {
     cortex_m::interrupt::free(|cs| *DMA.borrow(cs).borrow_mut() = Some(dma));
     // cortex_m::peripheral::NVIC::priority(pac::Interrupt::USART1, 0x01);
     // cortex_m::peripheral::NVIC::unmask(pac::Interrupt::USART1);
-    cortex_m::peripheral::NVIC::priority(pac::Interrupt::DMA2_STREAM4, 0x01);
+    cortex_m::peripheral::NVIC::priority(pac::Interrupt::DMA2_STREAM4, 0x02);
     cortex_m::peripheral::NVIC::unmask(pac::Interrupt::DMA2_STREAM4);
 
     mbus::bus().register("/telem/tx", |_, msg| match msg {
@@ -81,6 +80,7 @@ unsafe fn usart1_dma_isr() {
         for (i, b) in BUFFER.iter_mut().enumerate() {
             *b = (i + 1) as u8;
         }
-        transfer.next_transfer(&mut BUFFER).unwrap();
+        let (buf, _) = transfer.next_transfer(&mut BUFFER).unwrap();
+        log::info!("usart1_dma_isr {:?}", buf);
     }
 }
