@@ -48,6 +48,7 @@ profont = "0.6.1"
 shared-bus = "0.2.3"
 spin = "0.9.3"
 xtask = {path = "../xtask",  default-features = false, features = ["stm32f4","xtask_executor", "xtask_scheduler", "rtt_log" ,"timer"]}
+embedded-dma = "0.2.0"
 
 [dependencies.nalgebra]
 default-features = false

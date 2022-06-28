@@ -10,17 +10,23 @@ pub mod telem;
 
 use shared_bus::{BusManager, BusManagerSimple, NullMutex};
 use xtask::bsp::greenpill::hal::{
-    flash::FlashExt,
-    gpio::PushPull,
-    serial::config::Config,
-    spi::{Master, TransferModeNormal},
-};
-use xtask::bsp::greenpill::hal::{
     gpio::{Alternate, OpenDrain, Pin},
     i2c::I2c,
     pac,
     prelude::*,
     spi::{Mode, Phase, Polarity, Spi},
+};
+use xtask::{
+    arch::cortex_m::singleton,
+    bsp::greenpill::hal::{
+        dma::config::DmaConfig,
+        dma::{config, traits::StreamISR, PeripheralToMemory, Stream4, StreamsTuple, Transfer},
+        flash::FlashExt,
+        gpio::PushPull,
+        serial::config::Config,
+        serial::config::DmaConfig as DC,
+        spi::{Master, TransferModeNormal},
+    },
 };
 
 #[cfg(feature = "stm32f401ccu6")]
@@ -95,12 +101,12 @@ pub unsafe fn init() {
 
         match dp.USART1.serial(
             (gpioa.pa9.into_alternate(), gpioa.pa10.into_alternate()),
-            Config::default().baudrate(115200.bps()),
+            Config::default().baudrate(115200.bps()).dma(DC::Rx),
             &clocks,
         ) {
             Ok(serial) => {
                 let (tx, rx) = serial.split();
-                telem::init(rx, tx);
+                telem::init(rx, tx, dp.DMA2);
             }
             Err(err) => {
                 panic!("{:?}", err);
