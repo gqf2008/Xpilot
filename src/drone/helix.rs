@@ -1,3 +1,5 @@
+use crate::driver::bldc::Motor;
+use crate::driver::servo::Servo;
 use crate::fsm::Machine;
 use crate::mbus;
 use crate::message::*;
@@ -48,25 +50,30 @@ pub enum State {
     Stall,        //失速
     OutOfControl, //失控
     Hover,        //悬停
-    TurnLeft,     //左转
-    TrunRight,    //右转
-    ReturnFlight, //返航
-    MoveForward,  //前进
-    MoveLeft,     //向左
-    MoveRight,    //向右
-    MoveBack,     //后退
-    Autopilot,    //自动驾驶
+    Manual,       //手动
+    Auto,         //自动
     Following,    //跟随
     Trick,        //特技
+    Lost,         //失联
+    Crash,        //坠机
 }
 
-pub enum Event {}
-
 // 直升机
-pub struct Helix {
+pub struct Helix<PWM> {
     fsm: Machine<State, Message>,
-    speed: u32,           //速度
-    height: u32,          //高度
-    course: u32,          //航向
-    position: (f32, f32), //当前位置
+    speed: u32,             //速度
+    height: u32,            //高度
+    roll: f32,              //翻滚角
+    pitch: f32,             //俯仰角
+    yaw: f32,               //偏航角
+    position: (f32, f32),   //当前位置
+    eu: ExecutionUnit<PWM>, //执行单元
+}
+
+struct ExecutionUnit<PWM> {
+    motor: Motor<PWM>,  //主旋翼
+    servo1: Servo<PWM>, //roll
+    servo2: Servo<PWM>, //pitch
+    servo3: Servo<PWM>, //
+    servo4: Servo<PWM>, //yaw
 }

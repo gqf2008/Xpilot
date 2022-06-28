@@ -20,6 +20,9 @@ pub enum Message {
     Gps(Gps),
     //控制信号
     Control(Signal),
+
+    //遥控信号
+    RemoteControl(RC),
     //遥测协议
     Telem(Telem),
     None,
@@ -37,4 +40,12 @@ pub enum Signal {
     Led,
     Motor {},
     Servo {},
+}
+#[derive(Debug, Clone)]
+pub enum RC {
+    Hover,
+    TurnLeft(f32),  //左转
+    TrunRight(f32), //右转
+    ReturnFlight,   //返航
+    Move(f32, f32), //移动
 }
