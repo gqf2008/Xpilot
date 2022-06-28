@@ -57,6 +57,7 @@ pub enum State {
     MoveBack,     //后退
     Autopilot,    //自动驾驶
     Following,    //跟随
+    Trick,        //特技
 }
 
 pub enum Event {}
