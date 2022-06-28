@@ -10,7 +10,7 @@ use xtask::{Queue, TaskBuilder};
 
 static mut IMU: Option<InertialMeasurementUnit> = None;
 
-static mut Q: Option<Queue<()>> = None;
+static mut Q: Option<Queue<ImuData>> = None;
 pub fn start() {
     unsafe {
         let q = Queue::new();
@@ -19,10 +19,13 @@ pub fn start() {
         IMU.replace(InertialMeasurementUnit {
             ahrs: Madgwick::new(1.0 / 100.0, 0.1),
         });
-        mbus::bus().subscribe("/imu/raw", |_, _| {
-            if let Some(q) = Q.as_mut() {
-                q.push_back_isr(()).ok();
+        mbus::bus().subscribe("/imu/raw", |_, msg| match msg {
+            Message::ImuData(data) => {
+                if let Some(q) = Q.as_mut() {
+                    q.push_back_isr(data).ok();
+                }
             }
+            _ => {}
         });
     }
     TaskBuilder::new()
@@ -32,19 +35,10 @@ pub fn start() {
         .spawn(|| unsafe {
             loop {
                 if let Some(q) = Q.as_mut() {
-                    if let Some(_) = q.pop_front() {
+                    if let Some(mut data) = q.pop_front() {
                         if let Some(imu) = IMU.as_mut() {
-                            if let Some(mpu) = crate::driver::stm32f4::mpu9250::mpu() {
-                                if let Ok(all) = mpu.all::<[f32; 3]>() {
-                                    let acc = Accel::new(all.accel[0], all.accel[1], all.accel[2]);
-                                    let gyro = Gyro::new(all.gyro[0], all.gyro[1], all.gyro[2]);
-                                    let mag = Compass::new(all.mag[0], all.mag[1], all.mag[2]);
-                                    let mut data =
-                                        ImuData::default().accel(acc).gyro(gyro).compass(mag);
-                                    imu.update(&mut data);
-                                    mbus::bus().publish("/imu", Message::ImuData(data));
-                                }
-                            }
+                            imu.update(&mut data);
+                            mbus::bus().publish("/imu", Message::ImuData(data));
                         }
                     }
                 }
