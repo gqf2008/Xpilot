@@ -100,16 +100,12 @@ pub(crate) unsafe fn init(
     }
 }
 
-// pub fn mpu() -> Option<&'static mut MPU> {
-//     unsafe { MPU.as_mut() }
-// }
 #[export_name = "TIM1_UP_TIM10"]
 unsafe fn timer_isr() {
     static mut TIM: Option<CounterHz<TIM1>> = None;
     static mut MPU9250: Option<MPU> = None;
     let timer =
         TIM.get_or_insert_with(|| interrupt::free(|cs| TIMER.borrow(cs).replace(None).unwrap()));
-
     timer.clear_interrupt(Event::Update);
     let mpu =
         MPU9250.get_or_insert_with(|| interrupt::free(|cs| MPU.borrow(cs).replace(None).unwrap()));
