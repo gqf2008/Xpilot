@@ -6,7 +6,6 @@ mod mavlink;
 mod msp;
 
 pub fn start() {
-    log::info!("Start xpilot application");
     #[cfg(feature = "anotc")]
     anotc::start();
     #[cfg(feature = "mavlink")]

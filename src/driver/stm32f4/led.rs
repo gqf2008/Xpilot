@@ -76,7 +76,6 @@ pub unsafe fn init(pin: Pin<'C', 13>) {
 
 #[cfg(feature = "stm32f427vit6")]
 pub unsafe fn init(red: Pin<'C', 6>, green: Pin<'C', 7>, blue: Pin<'A', 8>) {
-    log::info!("Initialize led");
     let led = Led427::new(red.into_push_pull_output());
     RED.replace(led);
     let led = Led427::new(green.into_push_pull_output());

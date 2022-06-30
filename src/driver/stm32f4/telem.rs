@@ -27,13 +27,13 @@ type RxDma =
     Transfer<Stream5<DMA2>, 4, Rx<USART1>, PeripheralToMemory, &'static mut [u8; DMA_BUFFER_SIZE]>;
 
 pub unsafe fn init(rx: Rx<USART1, u8>, tx: Tx<USART1, u8>, dma: DMA2) {
-    let stream_5 = StreamsTuple::new(dma).5;
+    let stream5 = StreamsTuple::new(dma).5;
     let buf = singleton!(: [u8; DMA_BUFFER_SIZE] = [0; DMA_BUFFER_SIZE]).unwrap();
     for (i, b) in buf.iter_mut().enumerate() {
         *b = i as u8;
     }
     let mut dma = Transfer::init_peripheral_to_memory(
-        stream_5,
+        stream5,
         rx,
         buf,
         None,
@@ -46,8 +46,8 @@ pub unsafe fn init(rx: Rx<USART1, u8>, tx: Tx<USART1, u8>, dma: DMA2) {
     dma.start(|_rx| {});
     TX.replace(tx);
     cortex_m::interrupt::free(|cs| *DMA.borrow(cs).borrow_mut() = Some(dma));
-    cortex_m::peripheral::NVIC::priority(pac::Interrupt::DMA2_STREAM4, 0x08);
-    cortex_m::peripheral::NVIC::unmask(pac::Interrupt::DMA2_STREAM4);
+    cortex_m::peripheral::NVIC::priority(pac::Interrupt::DMA2_STREAM5, 0x01);
+    cortex_m::peripheral::NVIC::unmask(pac::Interrupt::DMA2_STREAM5);
 
     mbus::bus().register("/telem/tx", |_, msg| match msg {
         Message::Telem(Telem::Multiwii(b)) | Message::Telem(Telem::Mavlink(b)) => {
@@ -57,6 +57,7 @@ pub unsafe fn init(rx: Rx<USART1, u8>, tx: Tx<USART1, u8>, dma: DMA2) {
         }
         _ => {}
     });
+    log::info!("Initialize telem ok")
 }
 
 #[export_name = "DMA2_STREAM5"]
@@ -68,9 +69,10 @@ unsafe fn usart1_dma_isr() {
         cortex_m::interrupt::free(|cs| DMA.borrow(cs).replace(None).unwrap())
     });
     if Stream5::<DMA2>::get_fifo_error_flag() {
+        log::info!("usart1_dma_isr error");
         transfer.clear_fifo_error_interrupt();
-    }
-    if Stream5::<DMA2>::get_transfer_complete_flag() {
+    } else if Stream5::<DMA2>::get_transfer_complete_flag() {
+        log::info!("usart1_dma_isr complete");
         transfer.clear_transfer_complete_interrupt();
 
         static mut BUFFER: [u8; DMA_BUFFER_SIZE] = [0; DMA_BUFFER_SIZE];

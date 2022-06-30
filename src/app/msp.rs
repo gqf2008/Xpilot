@@ -2,7 +2,7 @@
 ///
 ///
 ///
-use crate::driver::{Accel, Gyro, Quaternion};
+use crate::driver::{Accel, Euler, Gyro, Quaternion};
 
 use crate::mbus::{self};
 use crate::message::*;
@@ -72,17 +72,15 @@ fn sync() {
         if let Some(msg) = recv.pop_front() {
             match msg {
                 Message::ImuData(data) => {
+                    let send = imu_count % m == 0;
                     if let Some(quat) = data.quaternion {
-                        let (roll, pitch, yaw) = quat.euler_angles();
-                        let mut froll = 0.0;
-                        let mut fpitch = 0.0;
-                        let mut fyaw = 0.0;
-                        // dither_roll.do_filter(roll, &mut froll);
-                        // dither_pitch.do_filter(pitch, &mut fpitch);
-                        // dither_yaw.do_filter(yaw, &mut fyaw);
-                        if imu_count % m == 0 {
+                        if send {
                             send_quat(quat);
-                            send_euler((froll, fpitch, fyaw));
+                        }
+                    }
+                    if let Some(euler) = data.euler {
+                        if send {
+                            send_euler(euler);
                         }
                     }
 
@@ -123,7 +121,8 @@ fn send_quat(quat: Quaternion) {
     mbus::bus().call("/telem/tx", Message::Telem(Telem::Multiwii(buf)));
 }
 
-fn send_euler((roll, pitch, yaw): (f32, f32, f32)) {
+fn send_euler(euler: Euler) {
+    let Euler { roll, pitch, yaw } = euler;
     let mut buf = vec![0u8; 13];
     buf.push(0xAA);
     buf.push(0xAF);

@@ -4,7 +4,6 @@ pub mod filter;
 mod imu;
 
 pub fn start() {
-    log::info!("Start xpilot attitude control system");
     imu::start();
-    log::info!("Start xpilot attitude control system ok");
+    log::info!("Start xpilot acs ok");
 }

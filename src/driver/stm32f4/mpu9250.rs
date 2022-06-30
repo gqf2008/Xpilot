@@ -74,7 +74,6 @@ pub(crate) unsafe fn init(
     ncs: Pin<'A', 4, Output<PushPull>>,
     clocks: &Clocks,
 ) {
-    log::info!("Initialize mpu9250");
     let sample_rate = 100;
     let mut delay = Delay::new();
     match Mpu9250::marg_default(spi, ncs, &mut delay) {
@@ -92,12 +91,12 @@ pub(crate) unsafe fn init(
             interrupt::free(|cs| *TIMER.borrow(cs).borrow_mut() = Some(timer));
             NVIC::priority(Interrupt::TIM1_UP_TIM10, 0x01);
             NVIC::unmask(Interrupt::TIM1_UP_TIM10);
-            log::info!("Initialize mpu9250 ok");
         }
         Err(err) => {
             panic!("{:?}", err);
         }
     }
+    log::info!("Initialize mpu9250 ok");
 }
 
 #[export_name = "TIM1_UP_TIM10"]

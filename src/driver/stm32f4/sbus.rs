@@ -43,6 +43,7 @@ pub unsafe fn init(rx: Rx<USART3, u8>, dma: DMA1) {
     cortex_m::interrupt::free(|cs| *DMA.borrow(cs).borrow_mut() = Some(dma));
     cortex_m::peripheral::NVIC::priority(pac::Interrupt::DMA1_STREAM1, 0x01);
     cortex_m::peripheral::NVIC::unmask(pac::Interrupt::DMA1_STREAM1);
+    log::info!("Initialize sbus ok")
 }
 
 #[export_name = "DMA1_STREAM1"]

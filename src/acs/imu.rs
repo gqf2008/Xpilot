@@ -4,6 +4,7 @@ use crate::acs::filter::first_order::FirstOrderFilter;
 use crate::acs::filter::limiting::LimitingFilter;
 use crate::acs::filter::moving_average::MovingAverageFilter;
 use crate::acs::filter::Filter;
+use crate::driver::Euler;
 use crate::{driver::ImuData, mbus, message::Message};
 use ahrs::{Ahrs, Madgwick};
 use xtask::{Queue, TaskBuilder};
@@ -44,14 +45,19 @@ pub fn start() {
                     if let Some(mut data) = q.pop_front() {
                         if let Some(imu) = IMU.as_mut() {
                             imu.update(&mut data);
-                            // let (roll, pitch, yaw) = quat.euler_angles();
-                            // let mut froll = 0.0;
-                            // let mut fpitch = 0.0;
-                            // let mut fyaw = 0.0;
-                            // dither_roll.do_filter(roll, &mut froll);
-                            // dither_pitch.do_filter(pitch, &mut fpitch);
-                            // dither_yaw.do_filter(yaw, &mut fyaw);
-                            mbus::bus().publish("/imu", Message::ImuData(data));
+                            if let Some(quat) = data.quaternion {
+                                let (roll, pitch, yaw) = quat.euler_angles();
+                                let mut froll = 0.0;
+                                let mut fpitch = 0.0;
+                                let mut fyaw = 0.0;
+                                dither_roll.do_filter(roll, &mut froll);
+                                dither_pitch.do_filter(pitch, &mut fpitch);
+                                dither_yaw.do_filter(yaw, &mut fyaw);
+                                mbus::bus().publish(
+                                    "/imu",
+                                    Message::ImuData(data.euler(Euler::new(froll, fpitch, fyaw))),
+                                );
+                            }
                         }
                     }
                 }
@@ -68,7 +74,7 @@ impl InertialMeasurementUnit {
             if let Some(gyro) = data.gyro {
                 if let Some(mag) = data.compass {
                     if let Ok(quat) = self.ahrs.update(&gyro, &acc, &mag) {
-                        data.quate(*quat);
+                        data.quate(*quat)
                     }
                 } else {
                     if let Ok(quat) = self.ahrs.update_imu(&gyro, &acc) {

@@ -353,6 +353,7 @@ impl RawData {
             )),
             compass: Default::default(),
             quaternion: Default::default(),
+            euler: Default::default(),
         }
     }
 }

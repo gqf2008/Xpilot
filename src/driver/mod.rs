@@ -18,20 +18,32 @@ use nalgebra::Vector3;
 pub fn init() {
     #[cfg(feature = "gd32vf103")]
     unsafe {
-        log::info!("Initialize gd32vf103 driver");
-        gd32vf103::init()
+        gd32vf103::init();
+        log::info!("Initialize gd32vf103 driver ok");
     }
     #[cfg(feature = "stm32f401ccu6")]
     unsafe {
-        log::info!("Initialize stm32f401ccu6 driver");
-        stm32f4::init()
+        stm32f4::init();
+        log::info!("Initialize stm32f401ccu6 driver ok");
     }
     #[cfg(feature = "stm32f427vit6")]
     unsafe {
-        log::info!("Initialize stm32f427vit6 driver");
-        stm32f4::init()
+        stm32f4::init();
+        log::info!("Initialize stm32f427vit6 driver ok");
     }
-    log::info!("Initialize driver ok");
+}
+
+#[derive(Copy, Clone, Debug, Default)]
+pub struct Euler {
+    pub roll: f32,
+    pub pitch: f32,
+    pub yaw: f32,
+}
+
+impl Euler {
+    pub fn new(roll: f32, pitch: f32, yaw: f32) -> Self {
+        Self { roll, pitch, yaw }
+    }
 }
 
 #[derive(Copy, Clone, Debug, Default)]
@@ -41,11 +53,17 @@ pub struct ImuData {
     pub gyro: Option<Gyro>,
     pub compass: Option<Compass>,
     pub quaternion: Option<UnitQuaternion<f32>>,
+    pub euler: Option<Euler>,
 }
 
 impl ImuData {
     pub fn quate(&mut self, quat: UnitQuaternion<f32>) {
         self.quaternion = Some(quat);
+    }
+
+    pub fn euler(mut self, euler: Euler) -> Self {
+        self.euler = Some(euler);
+        self
     }
     pub fn accel(mut self, accel: Accel) -> Self {
         self.accel = Some(accel);

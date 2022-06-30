@@ -118,12 +118,12 @@ pub(crate) unsafe fn init(
             timer.listen(Event::Update);
             TIMER.replace(timer);
             NVIC::unmask(Interrupt::TIM1_UP_TIM10);
-            log::info!("Initialize mpu6050 ok");
         }
         Err(err) => {
-            log::error!("Initialize mpu6050 error {:?}", err);
+            panic!("Initialize mpu6050 error {:?}", err);
         }
     }
+    log::info!("Initialize mpu6050 ok");
 }
 
 #[export_name = "TIM1_UP_TIM10"]
