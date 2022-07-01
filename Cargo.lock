@@ -553,6 +553,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "panic-halt"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "de96540e0ebde571dc55c73d60ef407c653844e6f9a1e2fdbd40c07b9252d812"
+
+[[package]]
 name = "panic-probe"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1062,6 +1068,7 @@ dependencies = [
  "linked_list_allocator",
  "log",
  "nb 1.0.0",
+ "panic-halt",
  "panic-probe",
  "panic-rtt-target",
  "profont 0.4.0",
@@ -1069,5 +1076,6 @@ dependencies = [
  "riscv-rt",
  "rtt-target",
  "stm32f4xx-hal",
+ "vcell",
  "x86_64",
 ]
