@@ -121,16 +121,39 @@ fn process() {
                                 );
                             }
                         }
-
-                        Command::MSP_STATUS_EX => {
-                            let status = MspStatusEx {
-                                cycle_time: 1000,
+                        Command::MSP_STATUS => {
+                            let status = MspStatus {
+                                cycle_time: 100,
                                 i2c_errors: 0,
                                 sensors: MspAvailableSensors {
-                                    sonar: false,
-                                    gps: false,
+                                    gyro: true,
+                                    sonar: true,
+                                    gps: true,
                                     mag: true,
-                                    baro: false,
+                                    baro: true,
+                                    acc: true,
+                                },
+                                null1: 0,
+                                flight_mode: 6,
+                                profile: 2,
+                                system_load: 0,
+                            };
+                            if let Ok(b) = status.pack() {
+                                send_multiwii(
+                                    Packet::new(Command::MSP_STATUS).with_data(b.to_vec()),
+                                );
+                            }
+                        }
+                        Command::MSP_STATUS_EX => {
+                            let status = MspStatusEx {
+                                cycle_time: 100,
+                                i2c_errors: 0,
+                                sensors: MspAvailableSensors {
+                                    gyro: true,
+                                    sonar: true,
+                                    gps: true,
+                                    mag: true,
+                                    baro: true,
                                     acc: true,
                                 },
                                 null1: 0,
@@ -159,7 +182,7 @@ fn process() {
                         Command::MSP_FC_VERSION => {
                             let fc_version = MspFlightControllerVersion {
                                 major: 4,
-                                minor: 0,
+                                minor: 3,
                                 patch: 0,
                             };
                             if let Ok(b) = fc_version.pack() {
@@ -192,28 +215,7 @@ fn process() {
                                 );
                             }
                         }
-                        Command::MSP_STATUS => {
-                            let status = MspStatus {
-                                cycle_time: 1000,
-                                i2c_errors: 0,
-                                sensors: MspAvailableSensors {
-                                    sonar: false,
-                                    gps: false,
-                                    mag: true,
-                                    baro: false,
-                                    acc: true,
-                                },
-                                null1: 0,
-                                flight_mode: 6,
-                                profile: 2,
-                                system_load: 0,
-                            };
-                            if let Ok(b) = status.pack() {
-                                send_multiwii(
-                                    Packet::new(Command::MSP_STATUS).with_data(b.to_vec()),
-                                );
-                            }
-                        }
+
                         Command::MSP_UID => {
                             let uid = MspUniqueId {
                                 uid: "XPILOT000000".as_bytes().try_into().expect(""),
