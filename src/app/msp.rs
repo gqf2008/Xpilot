@@ -33,7 +33,7 @@ pub fn start() {
     TaskBuilder::new()
         .name("multiwii")
         .stack_size(1024)
-        .spawn(|| sync());
+        .spawn(process);
 
     mbus::bus().subscribe("/imu", move |_, msg| match msg {
         Message::ImuData(data) => {
@@ -53,7 +53,7 @@ pub fn start() {
     });
 }
 
-fn sync() {
+fn process() {
     let recv: &'static Queue<Message> = unsafe { Q.as_ref().unwrap() };
     loop {
         if let Some(msg) = recv.pop_front() {
@@ -101,7 +101,6 @@ fn sync() {
                                         Packet::new(Command::MSP_ATTITUDE).with_data(b.to_vec()),
                                     );
                                 }
-                                mbus::bus().call("/led/b/toggle", Message::None);
                             }
                         }
                         Command::MSP_MIXER_CONFIG => {
@@ -183,7 +182,7 @@ fn sync() {
                         }
                         Command::MSP_BOARD_INFO => {
                             let board_info = MspBoardInfo {
-                                board_id: "Xpilot-STM32F407".as_bytes().try_into().expect(""),
+                                board_id: "XCM4".as_bytes().try_into().expect(""),
                                 hardware_revision: 11,
                                 fc_type: 6,
                             };
@@ -269,7 +268,7 @@ fn sync() {
 fn send_multiwii(msg: Packet) {
     let mut buf = vec![0u8; msg.packet_size_bytes_v2()];
     if let Ok(_) = msg.serialize_v2(&mut buf) {
-        //  log::info!(">>>> {:?}", msg);
         mbus::bus().call("/telem/tx", Message::Telem(Telem::Raw(buf)));
+        mbus::bus().call("/led/b/toggle", Message::None);
     }
 }
