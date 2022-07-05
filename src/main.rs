@@ -51,7 +51,7 @@ unsafe fn init_heap() {
     #[cfg(feature = "stm32f427vit6")]
     {
         let start_addr = rt::heap_start() as usize;
-        let size = 186 * 1024;
+        let size = 0x20000000 + 192 * 1024 - 0x200010A0;
         xtask::init_heap(start_addr, size);
         log::info!(
             "Initialize heap, start_addr:0x{:02X} size: {}",
