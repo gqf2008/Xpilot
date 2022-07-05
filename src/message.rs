@@ -23,16 +23,15 @@ pub enum Message {
 
     //遥控信号
     RemoteControl(RC),
-    //遥测协议
+    //遥测数据
     Telem(Telem),
     None,
 }
 
-//
 #[derive(Debug, Clone)]
 pub enum Telem {
-    Multiwii(Vec<u8>),
-    Mavlink(Vec<u8>),
+    Raw(Vec<u8>),
+    Multiwii(multiwii_serial_protocol_v2::Packet),
 }
 
 #[derive(Debug, Clone)]

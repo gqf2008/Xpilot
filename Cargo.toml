@@ -49,6 +49,8 @@ shared-bus = "0.2.3"
 spin = "0.9.3"
 xtask = {path = "../xtask",  default-features = false, features = ["stm32f4","xtask_executor", "xtask_scheduler", "rtt_log" ,"timer"]}
 embedded-dma = "0.2.0"
+multiwii_serial_protocol_v2 = {path="../multiwii_serial_protocol_v2.rs"}
+packed_struct = {version="0.10",default-features=false}
 
 [dependencies.nalgebra]
 default-features = false
