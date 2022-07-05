@@ -101,6 +101,7 @@ fn sync() {
                                         Packet::new(Command::MSP_ATTITUDE).with_data(b.to_vec()),
                                     );
                                 }
+                                mbus::bus().call("/led/b/toggle", Message::None);
                             }
                         }
                         Command::MSP_MIXER_CONFIG => {
@@ -182,7 +183,7 @@ fn sync() {
                         }
                         Command::MSP_BOARD_INFO => {
                             let board_info = MspBoardInfo {
-                                board_id: "Xpil".as_bytes().try_into().expect(""),
+                                board_id: "Xpilot-STM32F407".as_bytes().try_into().expect(""),
                                 hardware_revision: 11,
                                 fc_type: 6,
                             };
