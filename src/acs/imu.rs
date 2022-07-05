@@ -46,16 +46,13 @@ pub fn start() {
                         if let Some(imu) = IMU.as_mut() {
                             imu.update(&mut data);
                             if let Some(quat) = data.quaternion {
-                                let (roll, pitch, yaw) = quat.euler_angles();
-                                let mut froll = 0.0;
-                                let mut fpitch = 0.0;
-                                let mut fyaw = 0.0;
-                                dither_roll.do_filter(roll, &mut froll);
-                                dither_pitch.do_filter(pitch, &mut fpitch);
-                                dither_yaw.do_filter(yaw, &mut fyaw);
+                                let (mut roll, mut pitch, mut yaw) = quat.euler_angles();
+                                dither_roll.do_filter(roll, &mut roll);
+                                dither_pitch.do_filter(pitch, &mut pitch);
+                                dither_yaw.do_filter(yaw, &mut yaw);
                                 mbus::bus().publish(
                                     "/imu",
-                                    Message::ImuData(data.euler(Euler::new(froll, fpitch, fyaw))),
+                                    Message::ImuData(data.euler(Euler::new(roll, pitch, yaw))),
                                 );
                             }
                         }
