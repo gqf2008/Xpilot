@@ -386,6 +386,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "jpeg-encoder"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2cf3affe27ffd9f1992690ec7575568b222abe9cb39738f6531968aca8e64906"
+
+[[package]]
 name = "lazy_static"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1124,6 +1130,7 @@ dependencies = [
  "crossbeam",
  "embedded-dma",
  "embedded-hal 0.2.7",
+ "jpeg-encoder",
  "lazy_static",
  "libm",
  "log",

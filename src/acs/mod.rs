@@ -2,6 +2,7 @@
 mod adrc;
 pub mod filter;
 mod imu;
+pub mod pid;
 
 pub fn start() {
     imu::start();

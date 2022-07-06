@@ -43,8 +43,10 @@ fn sampling(recv: Queue<Message>) {
 }
 
 // 状态
+#[derive(Default)]
 pub enum State {
-    Locked,    //锁定
+    #[default]
+    Locked, //锁定
     Unlocked,  //解锁
     Roll,      //翻滚
     Stall,     //失速
