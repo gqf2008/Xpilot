@@ -44,18 +44,18 @@ fn sampling(recv: Queue<Message>) {
 
 // 状态
 pub enum State {
-    Locked,       //锁定
-    Unlocked,     //解锁
-    Roll,         //翻滚
-    Stall,        //失速
-    OutOfControl, //失控
-    Hover,        //悬停
-    Manual,       //手动
-    Auto,         //自动
-    Following,    //跟随
-    Trick,        //特技
-    Lost,         //失联
-    Crash,        //坠机
+    Locked,    //锁定
+    Unlocked,  //解锁
+    Roll,      //翻滚
+    Stall,     //失速
+    Ooc,       //失控 out of control
+    Hover,     //悬停
+    Manual,    //手动
+    Auto,      //自动
+    Following, //跟随
+    Trick,     //特技
+    Lost,      //失联
+    Crash,     //坠机
 }
 
 // 直升机

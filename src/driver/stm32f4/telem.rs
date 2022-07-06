@@ -85,18 +85,22 @@ unsafe fn read_dma() {
     let parser = MSGPARSER.get_or_insert_with(|| {
         cortex_m::interrupt::free(|cs| PARSER.borrow(cs).replace(None).unwrap())
     });
+    parser.reset();
     static mut BUF: [u8; DMA_BUFFER_SIZE] = [0; DMA_BUFFER_SIZE];
     match transfer.next_transfer(&mut BUF) {
         Ok((buf, _current)) => {
             for b in buf.iter() {
                 match parser.parse(*b) {
                     Ok(Some(packet)) => xtask::sync::free(|_| {
-                        mbus::bus()
-                            .publish_isr("/telem/msp", Message::Telem(Telem::Multiwii(packet)));
+                        if packet.code > 0 {
+                            mbus::bus()
+                                .publish_isr("/telem/msp", Message::Telem(Telem::Multiwii(packet)));
+                        }
                     }),
                     Ok(None) => {}
                     Err(err) => {
                         log::error!("{:?}", err);
+                        break;
                     }
                 }
             }

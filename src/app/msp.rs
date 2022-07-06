@@ -26,7 +26,7 @@ static IMU_DATA: AtomicCell<ImuData> = AtomicCell::new(ImuData {
 static mut Q: Option<Queue<Message>> = None;
 
 pub fn start() {
-    let q = Queue::new();
+    let q = Queue::with_capacity(100);
     unsafe {
         Q.replace(q);
     }
@@ -59,7 +59,6 @@ fn process() {
         if let Some(msg) = recv.pop_front() {
             match msg {
                 Message::Telem(Telem::Multiwii(msg)) => {
-                    // log::info!("<<<< {:?}", msg);
                     match msg.cmd {
                         Command::MSP_API_VERSION => {
                             let api_version = MspApiVersion {
@@ -128,7 +127,7 @@ fn process() {
                                 sensors: MspAvailableSensors {
                                     gyro: true,
                                     sonar: true,
-                                    gps: true,
+                                    gps: false,
                                     mag: true,
                                     baro: true,
                                     acc: true,
@@ -151,7 +150,7 @@ fn process() {
                                 sensors: MspAvailableSensors {
                                     gyro: true,
                                     sonar: true,
-                                    gps: true,
+                                    gps: false,
                                     mag: true,
                                     baro: true,
                                     acc: true,
@@ -256,7 +255,14 @@ fn process() {
                                 );
                             }
                         }
+                        Command::MSP_RC => {
+                            let rc = MspRcChannelValue { value: 16 };
+                            if let Ok(b) = rc.pack() {
+                                send_multiwii(Packet::new(Command::MSP_RC).with_data(b.to_vec()));
+                            }
+                        }
                         _ => {
+                            log::info!("Ignore {:?}", msg);
                             send_multiwii(Packet::new_code(msg.code));
                         }
                     }

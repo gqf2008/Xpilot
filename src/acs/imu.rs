@@ -13,7 +13,7 @@ static mut IMU: Option<InertialMeasurementUnit> = None;
 static mut Q: Option<Queue<ImuData>> = None;
 pub fn start() {
     unsafe {
-        let q = Queue::new();
+        let q = Queue::with_capacity(100);
         Q.replace(q);
 
         IMU.replace(InertialMeasurementUnit {
@@ -29,7 +29,7 @@ pub fn start() {
         });
     }
     TaskBuilder::new()
-        .name("imu")
+        .name("imu_raw_filter")
         .priority(1)
         .stack_size(1024)
         .spawn(|| unsafe {

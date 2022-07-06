@@ -14,7 +14,7 @@ use xtask::{sync, Queue, TaskBuilder};
 static mut Q: Option<Queue<Message>> = None;
 
 pub fn start() {
-    let q = Queue::new();
+    let q = Queue::with_capacity(100);
     unsafe {
         Q.replace(q);
     }
