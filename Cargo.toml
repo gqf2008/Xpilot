@@ -6,7 +6,7 @@ version = "0.1.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
 # 默认
-default = ["stm32f427vit6", "mpu9250", "msp","helix"]
+default = ["stm32f427vit6", "mpu9250", "msp", "helix"]
 # chip
 gd32vf103 = []
 stm32f401ccu6 = []
@@ -41,24 +41,23 @@ mavlink = {version = "0.10.1", default-features = false, features = ["embedded",
 # mpu6050 = "0.1.5"
 # mpu6050-dmp = {git = "https://github.com/gqf2008/mpu6050-dmp-rs"}
 ahrs = {version = "0.5", default-features = false}
+embedded-dma = "0.2.0"
+jpeg-encoder = {version = "0.5.1", default-features = false}
 mpu9250 = {version = "0.24.0"}
+multiwii_serial_protocol_v2 = {path = "../multiwii_serial_protocol_v2.rs"}
 nb = "1.0.0"
+num-traits = {version = "0.2.15", default-features = false}
+packed_struct = {version = "0.10", default-features = false}
 pid = "3.0.0"
 profont = "0.6.1"
 shared-bus = "0.2.3"
 spin = "0.9.3"
-xtask = {path = "../xtask",  default-features = false, features = ["stm32f4","xtask_executor", "xtask_scheduler", "rtt_log" ,"timer"]}
-embedded-dma = "0.2.0"
-multiwii_serial_protocol_v2 = {path="../multiwii_serial_protocol_v2.rs"}
-packed_struct = {version="0.10",default-features=false}
-jpeg-encoder = {version="0.5.1",default-features=false}
-
+xtask = {path = "../xtask", default-features = false, features = ["stm32f4", "xtask_executor", "xtask_scheduler", "rtt_log", "timer"]}
 
 [dependencies.nalgebra]
 default-features = false
 features = ["libm-force"]
 version = "0.30"
-
 
 [profile.release]
 codegen-units = 1

@@ -1139,6 +1139,7 @@ dependencies = [
  "multiwii_serial_protocol_v2",
  "nalgebra",
  "nb 1.0.0",
+ "num-traits",
  "packed_struct",
  "pid",
  "profont 0.6.1",
