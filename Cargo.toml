@@ -58,6 +58,9 @@ xtask = {path = "../xtask", default-features = false, features = ["stm32f4", "xt
 default-features = false
 features = ["libm-force"]
 version = "0.30"
+[dependencies.simba]
+version = "0.7"
+default-features = false
 
 [profile.release]
 codegen-units = 1

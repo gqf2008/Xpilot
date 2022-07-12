@@ -1144,6 +1144,7 @@ dependencies = [
  "pid",
  "profont 0.6.1",
  "shared-bus",
+ "simba",
  "spin 0.9.3",
  "xtask",
 ]

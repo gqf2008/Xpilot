@@ -1,6 +1,7 @@
 //! 滤波抽象&常用实现
 //! 参考链接: https://zhuanlan.zhihu.com/p/271154535
 
+pub mod ahrs;
 pub mod dither;
 pub mod first_order;
 pub mod limiting;

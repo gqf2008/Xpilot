@@ -10,7 +10,9 @@
 /// 灵敏度低；
 /// 对偶然出现的脉冲性干扰的抑制作用较差，不适于脉冲干扰较严重的场合 不适合用于开关电源电路
 use super::Filter;
+use nalgebra::Vector3;
 
+#[derive(Debug, Clone, Copy)]
 pub struct MovingAverageFilter<const N: usize> {
     values: [f32; N],
 }
@@ -31,5 +33,25 @@ impl<const N: usize> Filter<f32, f32> for MovingAverageFilter<N> {
         }
 
         *output = sum / (N - 1) as f32;
+    }
+}
+
+pub struct MovingAverageFilter3<const N: usize> {
+    filters: [MovingAverageFilter<N>; 3],
+}
+
+impl<const N: usize> MovingAverageFilter3<N> {
+    pub fn new() -> Self {
+        let filters = [MovingAverageFilter::<N>::new(); 3];
+        Self { filters }
+    }
+}
+
+impl<const N: usize> Filter<Vector3<f32>, Vector3<f32>> for MovingAverageFilter3<N> {
+    fn do_filter(&mut self, input: Vector3<f32>, output: &mut Vector3<f32>) {
+        self.filters
+            .iter_mut()
+            .enumerate()
+            .for_each(|(i, f)| f.do_filter(input[i], &mut output[i]))
     }
 }
