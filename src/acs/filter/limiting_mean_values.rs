@@ -11,7 +11,6 @@ use alloc::vec;
 ///  比较浪费RAM。
 ///
 use super::{limiting::LimitingFilter, mean_value::MeanValueFilter, Filter};
-use nalgebra::Vector3;
 
 #[derive(Debug, Clone, Copy)]
 pub struct LimitingMeanValuesFilter {
