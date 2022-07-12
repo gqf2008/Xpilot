@@ -14,7 +14,9 @@
 /// 如果在计数器溢出的那一次采样到的值恰好是干扰值,则会将干扰值当作有效值导入系统。
 ///
 use super::Filter;
+use nalgebra::Vector3;
 
+#[derive(Debug, Clone, Copy)]
 pub struct DitherFilter<const N: usize> {
     value: f32,
     count: usize,
@@ -41,5 +43,25 @@ impl<const N: usize> Filter<f32, f32> for DitherFilter<N> {
             self.count = 0;
         }
         *output = self.value;
+    }
+}
+
+pub struct DitherFilter3<const N: usize> {
+    filters: [DitherFilter<N>; 3],
+}
+
+impl<const N: usize> DitherFilter3<N> {
+    pub fn new() -> Self {
+        let filters = [DitherFilter::<N>::new(); 3];
+        Self { filters }
+    }
+}
+
+impl<const N: usize> Filter<Vector3<f32>, Vector3<f32>> for DitherFilter3<N> {
+    fn do_filter(&mut self, input: Vector3<f32>, output: &mut Vector3<f32>) {
+        self.filters
+            .iter_mut()
+            .enumerate()
+            .for_each(|(i, f)| f.do_filter(input[i], &mut output[i]))
     }
 }

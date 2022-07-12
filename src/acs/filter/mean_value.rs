@@ -11,7 +11,9 @@
 ///
 /// 对于测量速度较慢或要求数据计算较快的实时控制不适用
 use super::Filter;
+use nalgebra::Vector3;
 
+#[derive(Debug, Clone, Copy)]
 pub struct MeanValueFilter;
 
 impl Filter<&mut [f32], f32> for MeanValueFilter {

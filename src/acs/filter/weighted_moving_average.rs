@@ -11,7 +11,9 @@
 ///  对于纯滞后时间常数较小、采样周期较长、变化缓慢的信号；
 /// 不能迅速反应系统当前所受干扰的严重程度，滤波效果差
 use super::Filter;
+use nalgebra::Vector3;
 
+#[derive(Debug, Clone, Copy)]
 pub struct WeightedMovingAverageFilter<const N: usize> {
     values: [f32; N],
     sum_coe: u32,
@@ -35,5 +37,25 @@ impl<const N: usize> Filter<f32, f32> for WeightedMovingAverageFilter<N> {
             self.values[i] = val;
         }
         *output = sum / self.sum_coe as f32;
+    }
+}
+
+pub struct WeightedMovingAverageFilter3<const N: usize> {
+    filters: [WeightedMovingAverageFilter<N>; 3],
+}
+
+impl<const N: usize> WeightedMovingAverageFilter3<N> {
+    pub fn new(cos: [f32; N], sum_coe: u32) -> Self {
+        let filters = [WeightedMovingAverageFilter::<N>::new(cos, sum_coe); 3];
+        Self { filters }
+    }
+}
+
+impl<const N: usize> Filter<Vector3<f32>, Vector3<f32>> for WeightedMovingAverageFilter3<N> {
+    fn do_filter(&mut self, input: Vector3<f32>, output: &mut Vector3<f32>) {
+        self.filters
+            .iter_mut()
+            .enumerate()
+            .for_each(|(i, f)| f.do_filter(input[i], &mut output[i]))
     }
 }

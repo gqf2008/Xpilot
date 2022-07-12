@@ -28,7 +28,7 @@ pub trait Filter<In, Out>: Send + Sync {
     }
 }
 
-#[derive(Default, Clone)]
+#[derive(Default, Clone, Copy)]
 pub struct Chain<T, U> {
     first: T,
     second: U,
