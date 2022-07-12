@@ -88,8 +88,8 @@ pub unsafe fn init() {
         let rcc = dp.RCC.constrain();
         let clocks = rcc
             .cfgr
-            .hclk((CPU_CLOCK_HZ as u32).Hz())
-            .sysclk((SYSTICK_CLOCK_HZ as u32).Hz())
+            .hclk((SYSTICK_CLOCK_HZ as u32).Hz())
+            .sysclk((CPU_CLOCK_HZ as u32).Hz())
             .freeze();
         let gpioa = dp.GPIOA.split();
         let gpiob = dp.GPIOB.split();

@@ -50,14 +50,17 @@ unsafe fn init_heap() {
     #[cfg(feature = "stm32f427vit6")]
     {
         let start_addr = rt::heap_start() as usize;
-        let size = 0x20000000 + 192 * 1024 - 0x200010A0;
-        xtask::init_heap(start_addr, size);
-        log::info!(
-            "Initialize heap, start_addr:0x{:02X} size: {}",
-            start_addr,
-            size
-        );
+        let stack_addr = stack_start() as usize;
+        xtask::init_heap(start_addr, stack_addr - 4 * 1024 - start_addr);
     }
+}
+
+#[inline]
+pub fn stack_start() -> *mut u32 {
+    extern "C" {
+        static mut _stack_start: u32;
+    }
+    unsafe { &mut _stack_start }
 }
 
 #[rt::entry]
