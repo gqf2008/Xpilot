@@ -4,6 +4,8 @@
 pub mod ahrs;
 pub mod dither;
 pub mod first_order;
+pub mod iir_filter;
+pub mod jitter_filter;
 pub mod limiting;
 pub mod limiting_dither;
 pub mod limiting_mean_values;

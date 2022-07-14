@@ -1,12 +1,12 @@
 //! 惯性测量单元，接收陀螺仪、加速度计、磁力计数据，融合计算输出欧拉角
 //!
 use crate::acs::filter::first_order::FirstOrderFilter3;
-use crate::acs::filter::limiting::LimitingFilter3;
-use crate::acs::filter::moving_average::MovingAverageFilter3;
-use crate::acs::filter::{Chain, Filter};
+use crate::acs::filter::jitter_filter::JitterFilter3;
+use crate::acs::filter::Filter;
 use crate::driver::Euler;
 use crate::{driver::ImuData, mbus, message::Message};
 use ahrs::{Ahrs, Madgwick};
+use nalgebra::Vector3;
 
 use xtask::{Queue, TaskBuilder};
 static mut IMU_FILTER: Option<ImuFilter> = None;
@@ -31,6 +31,7 @@ pub fn start() {
         .priority(1)
         .stack_size(1024)
         .spawn(|| unsafe {
+            let mut filter = FirstOrderFilter3::new(0.3).chain(JitterFilter3::new(0.01));
             loop {
                 if let Some(q) = Q.as_mut() {
                     if let Some(mut data) = q.pop_front() {
@@ -38,9 +39,16 @@ pub fn start() {
                             imu.update(&mut data);
                             if let Some(quat) = data.quaternion {
                                 let (roll, pitch, yaw) = quat.euler_angles();
+                                let mut output = Vector3::<f32>::default();
+                                filter.do_filter(
+                                    Vector3::<f32>::from_column_slice(&[roll, pitch, yaw]),
+                                    &mut output,
+                                );
                                 mbus::bus().publish(
                                     "/imu",
-                                    Message::ImuData(data.euler(Euler::new(roll, pitch, yaw))),
+                                    Message::ImuData(
+                                        data.euler(Euler::new(output[0], output[1], output[2])),
+                                    ),
                                 );
                             }
                         }
@@ -51,33 +59,21 @@ pub fn start() {
 }
 pub struct ImuFilter {
     ahrs: Madgwick<f32>,
-    accel: Chain<FirstOrderFilter3, MovingAverageFilter3<50>>,
-    gyro: Chain<FirstOrderFilter3, MovingAverageFilter3<50>>,
-    compass: Chain<Chain<LimitingFilter3, FirstOrderFilter3>, MovingAverageFilter3<60>>,
 }
 
 impl ImuFilter {
     fn new() -> Self {
         Self {
             ahrs: Madgwick::new(1.0 / 100.0, 0.1),
-            accel: FirstOrderFilter3::new(0.01).chain(MovingAverageFilter3::<50>::new()),
-            gyro: FirstOrderFilter3::new(0.01).chain(MovingAverageFilter3::<50>::new()),
-            compass: LimitingFilter3::new(3.0)
-                .chain(FirstOrderFilter3::new(0.01))
-                .chain(MovingAverageFilter3::<60>::new()),
         }
     }
 }
 
 impl ImuFilter {
     pub fn update(&mut self, data: &mut ImuData) {
-        if let Some(mut acc) = data.accel {
-            self.accel.do_filter(acc, &mut acc);
-
-            if let Some(mut gyro) = data.gyro {
-                self.gyro.do_filter(gyro, &mut gyro);
-                if let Some(mut mag) = data.compass {
-                    self.compass.do_filter(mag, &mut mag);
+        if let Some(acc) = data.accel {
+            if let Some(gyro) = data.gyro {
+                if let Some(mag) = data.compass {
                     if let Ok(quat) = self.ahrs.update(&gyro, &acc, &mag) {
                         data.quate(*quat)
                     }
