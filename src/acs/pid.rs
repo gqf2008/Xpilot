@@ -47,13 +47,13 @@ pub struct Pid<T: FloatCore> {
     ki: T,
     kd: T,
     mode: Mode,
-    setpoint: T,                    //目标值
-    limit_output: Option<Limit<T>>, //输出限幅
-    limit_p: Option<Limit<T>>,      //比例输出限幅
-    limit_i: Option<Limit<T>>,      //积分输出限幅
-    limit_d: Option<Limit<T>>,      //微分输出限幅
-    error: Error<T>,                //误差
-    derror: Error<T>,               //微分误差
+    setpoint: T,                 //目标值
+    limit_out: Option<Limit<T>>, //输出限幅
+    limit_p: Option<Limit<T>>,   //比例输出限幅
+    limit_i: Option<Limit<T>>,   //积分输出限幅
+    limit_d: Option<Limit<T>>,   //微分输出限幅
+    error: Error<T>,             //误差
+    derror: Error<T>,            //微分误差
     p_out: T,
     i_out: T,
     d_out: T,
@@ -68,7 +68,7 @@ impl<T: FloatCore> Pid<T> {
             kd,
             mode: Default::default(),
             setpoint: T::zero(),
-            limit_output: Default::default(),
+            limit_out: Default::default(),
             limit_p: Default::default(),
             limit_i: Default::default(),
             limit_d: Default::default(),
@@ -84,8 +84,8 @@ impl<T: FloatCore> Pid<T> {
         self.mode = mode;
         self
     }
-    pub fn with_limit_output(mut self, limit: Limit<T>) -> Self {
-        self.limit_output = Some(limit);
+    pub fn with_limit_out(mut self, limit: Limit<T>) -> Self {
+        self.limit_out = Some(limit);
         self
     }
     pub fn with_limit_proportion(mut self, limit: Limit<T>) -> Self {
@@ -109,7 +109,7 @@ impl<T: FloatCore> Pid<T> {
     }
 
     //求控制量
-    pub fn next_setpoint(&mut self, value: T, setpoint: T) -> T {
+    pub fn next1(&mut self, value: T, setpoint: T) -> T {
         self.setpoint = setpoint;
         self.next(value)
     }
@@ -141,26 +141,29 @@ impl<T: FloatCore> Pid<T> {
                 //叠加三个输出到总输出
                 self.out = limit(
                     self.p_out + self.i_out + self.d_out,
-                    self.limit_output.as_ref(),
+                    self.limit_out.as_ref(),
                 );
             }
             //增量式PID
             Mode::Increasing => {
                 //以本次误差与上次误差的差值作为比例项的输入带入计算
-                self.p_out = self.kp * (self.error.current - self.error.last);
+                self.p_out = limit(
+                    self.kp * (self.error.current - self.error.last),
+                    self.limit_p.as_ref(),
+                );
                 //以本次误差作为积分项带入计算
-                self.i_out = self.ki * self.error.current;
+                self.i_out = limit(self.ki * self.error.current, self.limit_i.as_ref());
                 //迭代微分项的数组
                 self.derror.prev = self.derror.last;
                 self.derror.last = self.derror.current;
                 //以本次误差与上次误差的差值减去上次误差与上上次误差的差值作为微分项的输入带入计算
                 self.derror.current =
                     self.error.current - T::from(2.0).unwrap() * self.error.last + self.error.prev;
-                self.d_out = self.kd * self.derror.current;
+                self.d_out = limit(self.kd * self.derror.current, self.limit_d.as_ref());
                 //叠加三个项的输出作为总输出
                 self.out = self.out + self.p_out + self.i_out + self.d_out;
-                //对总输出做一个先限幅
-                self.out = limit(self.out, self.limit_output.as_ref());
+                //总输出限幅
+                self.out = limit(self.out, self.limit_out.as_ref());
             }
         }
         self.out
