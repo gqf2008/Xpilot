@@ -1,3 +1,4 @@
+use crate::acs::pid::Pid;
 use crate::driver::bldc::Motor;
 use crate::driver::servo::Servo;
 use crate::fsm::Machine;
@@ -70,6 +71,12 @@ pub struct Helix<PWM> {
     yaw: f32,               //偏航角
     position: (f32, f32),   //当前位置
     eu: ExecutionUnit<PWM>, //执行单元
+    ctl: Controller,        //控制器单元
+}
+
+struct Controller {
+    angle_ctl: Pid<f32>, //角度控制器
+    accel_ctl: Pid<f32>, //加速度控制器
 }
 
 struct ExecutionUnit<PWM> {

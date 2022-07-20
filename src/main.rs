@@ -72,8 +72,6 @@ fn main() -> ! {
     driver::init();
     // 启动应用
     app::start();
-    // 启动姿态控制
-    acs::start();
     //启动调度器
     xtask::start()
 }

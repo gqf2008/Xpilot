@@ -55,7 +55,7 @@ pub struct Pid<T: FloatCore> {
     error: Error<T>,             //误差
     derror: Error<T>,            //微分误差
     p_out: T,
-    i_out: T,
+    i_out: T, //积分项，误差对时间的积分
     d_out: T,
     out: T,
 }
