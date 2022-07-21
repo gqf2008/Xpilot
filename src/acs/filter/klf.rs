@@ -1,8 +1,8 @@
 use super::Filter;
 use alloc::vec;
 
-use nalgebra::{DMatrix, Dynamic, VecStorage};
-// 卡尔曼滤波的本质是通过k系数来表示更相信哪个值；预估值=值1 + k * (值1 - 值2);
+use nalgebra::{DMatrix, DVector, Dynamic, Matrix, VecStorage};
+// 卡尔曼滤波的本质是通过k系数来表示更相信哪个值；预估值=值1 + k * (值2 - 值1);
 // 所以核心就是怎么计算k值
 
 //简单卡尔曼算法
@@ -40,8 +40,8 @@ impl Filter<f32, f32> for KalmanFilter {
     }
 }
 
-//卡尔曼融合
-//两个传感器的采样数据估计最优值
+/// 卡尔曼融合
+/// 两个传感器的采样数据估计最优值
 #[derive(Debug, Clone, Copy)]
 pub struct FusionKalmanFilter {
     k: f32,  //k时刻的卡尔曼增益K，0-1之间
@@ -96,82 +96,79 @@ impl Filter<(f32, f32), f32> for FusionKalmanFilter {
     }
 }
 
-//卡尔曼滤波
+/// 卡尔曼滤波
 #[derive(Debug, Clone)]
 pub struct MatrixKalmanFilter {
-    // standard_deviation: f32, //标准差
-    q: DMatrix<f32>, //过程误差/过程激励噪声协方差矩阵
-    r: DMatrix<f32>, //测量误差/观测噪声协方差矩阵
-    a: DMatrix<f32>, //状态转移矩阵
-    h: DMatrix<f32>, //观测器矩阵
-    i: DMatrix<f32>, //单位矩阵
+    /// 过程激励噪声协方差矩阵（系统过程的协方差）。该参数被用来表示状
+    /// 态转换矩阵与实际过程之间的误差。因为我们无法直接观测到过程信号，
+    ///  所以 Q 的取值是很难确定的。是卡尔曼滤波器用于估计离散时间过程
+    /// 的状态变量，也叫预测模型本身带来的噪声。状态转移协方差矩阵
+    q: DMatrix<f32>,
 
-    k: DMatrix<f32>, //k时刻卡尔曼增益K，0-1之间，k=标准方差1的平方/(标准方差1的平方+标准方差2的平方)
-    p_: DMatrix<f32>, //先验估计误差协方差矩阵
+    /// 测量噪声协方差矩阵。滤波器实际实现时，测量噪声协方差 R一般可以观测得到，是滤波器的已知条件。
+    r: DMatrix<f32>,
+    /// 是将输入转换为状态的矩阵，因为没有输入控制量所以不需要了
+    //b: DMatrix<f32>,
+    /// 状态转移矩阵，实际上是对目标状态转换的一种猜想模型。
+    a: DMatrix<f32>,
+
+    /// 观测器矩阵，是状态变量到测量（观测）的转换矩阵，表示将状态
+    /// 和观测连接起来的关系，卡尔曼滤波里为线性关系，它负责将 m 维
+    /// 的测量值转换到 n 维，使之符合状态变量的数学形式，是滤波的前提条件之一。
+    h: DMatrix<f32>,
+
+    // k: DMatrix<f32>,  //滤波增益矩阵，是滤波的中间计算结果，卡尔曼增益，或卡尔曼系数。
+    // p_: DMatrix<f32>, //先验估计误差协方差矩阵
     p: DMatrix<f32>, //后验估计误差协方差矩阵
-    x_: DMatrix<f32>, //先验估计
-    x: DMatrix<f32>, //后验估计
-    qe_sd: DMatrix<f32>, //过程误差标准方差
-    re_sd: DMatrix<f32>, //测量误差标准方差
-    qe_w: DMatrix<f32>, //状态过程误差
-    re_v: DMatrix<f32>, //测量过程误差
+    // x_: DMatrix<f32>, //先验估计
+    x: DVector<f32>, //后验估计
+                     // qe_sd: DMatrix<f32>, //过程误差标准方差
+                     // re_sd: DMatrix<f32>, //测量误差标准方差
+                     // qe_w: DMatrix<f32>, //状态过程误差
+                     // re_v: DMatrix<f32>, //测量过程误差
 }
 
 impl MatrixKalmanFilter {
-    pub fn new(
-        q: DMatrix<f32>,
-        r: DMatrix<f32>,
-        a: DMatrix<f32>,
-        h: DMatrix<f32>,
-        i: DMatrix<f32>,
-    ) -> Self {
+    pub fn new(q: DMatrix<f32>, r: DMatrix<f32>, a: DMatrix<f32>, h: DMatrix<f32>) -> Self {
         Self {
             q,
             r,
             a,
             h,
-            i,
-            k: DMatrix::from_vec_storage(VecStorage::new(Dynamic::new(0), Dynamic::new(0), vec![])),
-            p_: DMatrix::from_vec_storage(VecStorage::new(
-                Dynamic::new(0),
-                Dynamic::new(0),
-                vec![],
-            )),
             p: DMatrix::from_vec_storage(VecStorage::new(Dynamic::new(0), Dynamic::new(0), vec![])),
-            x_: DMatrix::from_vec_storage(VecStorage::new(
-                Dynamic::new(0),
-                Dynamic::new(0),
-                vec![],
-            )),
-            x: DMatrix::from_vec_storage(VecStorage::new(Dynamic::new(0), Dynamic::new(0), vec![])),
-            qe_sd: DMatrix::from_vec_storage(VecStorage::new(
-                Dynamic::new(0),
-                Dynamic::new(0),
-                vec![],
-            )),
-            re_sd: DMatrix::from_vec_storage(VecStorage::new(
-                Dynamic::new(0),
-                Dynamic::new(0),
-                vec![],
-            )),
-            qe_w: DMatrix::from_vec_storage(VecStorage::new(
-                Dynamic::new(0),
-                Dynamic::new(0),
-                vec![],
-            )),
-            re_v: DMatrix::from_vec_storage(VecStorage::new(
-                Dynamic::new(0),
-                Dynamic::new(0),
-                vec![],
-            )),
+            x: DVector::from_row_slice(&[]),
         }
     }
 }
 
-impl Filter<DMatrix<f32>, DMatrix<f32>> for MatrixKalmanFilter {
-    fn do_filter(&mut self, z: DMatrix<f32>, x: &mut DMatrix<f32>) {
-        let z = z.clone() + z;
-        let z = self.k.clone() * z.clone() + z;
-        *x = z;
+impl Filter<DVector<f32>, DVector<f32>> for MatrixKalmanFilter {
+    fn do_filter(&mut self, z: DVector<f32>, out: &mut DVector<f32>) {
+        // 预测，时间更新方程
+        // 1. 计算先验估计
+        let x_ = self.a.clone() * self.x.clone();
+        // 2. 计算先验估计误差协方差
+        let p_ = self.a.clone() * self.p.clone() * self.a.clone().transpose() + self.q.clone();
+        // 校正，状态更新方差
+        // 3. 计算卡尔曼增益
+        let p_ht = p_.clone() * self.h.clone().transpose();
+        let k = p_ht.clone()
+            * (self.h.clone() * p_ht.clone() + self.r.clone())
+                .try_inverse()
+                .unwrap();
+        // 4. 计算后验估计
+        let x = x_.clone() + k.clone() * (z.clone() - self.h.clone() * x_.clone());
+
+        // 5. 计算后验误差协方差
+        let mut i = DMatrix::from_vec_storage(VecStorage::new(
+            Dynamic::new(x.row_iter().len()),
+            Dynamic::new(x.column_iter().len()),
+            vec![],
+        ));
+        i.fill_with_identity();
+        let p = (i - k.clone() * self.h.clone()) * p_.clone();
+
+        self.x = x.clone();
+        self.p = p.clone();
+        *out = x.clone();
     }
 }

@@ -54,6 +54,7 @@ shared-bus = "0.2.3"
 spin = "0.9.3"
 xtask = {path = "../xtask", default-features = false, features = ["stm32f4", "xtask_executor", "xtask_scheduler", "rtt_log", "timer"]}
 yakf = {git = "https://github.com/gqf2008/yakf.git"}
+eskf = {version = "0.2.0", default-features = false}
 
 [dependencies.nalgebra]
 default-features = false
