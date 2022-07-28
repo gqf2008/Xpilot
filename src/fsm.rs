@@ -109,10 +109,7 @@ where
         self.state
     }
 
-    pub fn on<F, T>(&mut self, ev: E, f: F) -> Result<T>
-    where
-        F: FnOnce() -> Result<T> + Send + 'static,
-    {
+    pub fn on(&mut self, ev: E) -> Result<Action<S>> {
         for trans in &self.transitions {
             if trans.from == self.state && trans.event.unwrap() == ev {
                 if let Some(f) = trans.guard.as_ref() {
@@ -127,9 +124,20 @@ where
                         f()?;
                     }
                 }
-                return f();
+                return Ok(Action(self.state));
             }
         }
         Err(Error::IllegalTransition)
+    }
+}
+
+pub struct Action<S>(S);
+
+impl<S> Action<S> {
+    pub fn enforce<F, T>(&self, f: F) -> Result<T>
+    where
+        F: FnOnce(&S) -> Result<T> + Send + 'static,
+    {
+        f(&self.0)
     }
 }
