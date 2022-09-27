@@ -1,9 +1,9 @@
 use crate::acs::pid::Pid;
 use crate::driver::bldc::Motor;
 use crate::driver::servo::Servo;
-use crate::fsm::Machine;
 use crate::mbus;
 use crate::message::*;
+use xtask::fsm::Machine;
 use xtask::{Queue, TaskBuilder};
 
 pub fn start() {

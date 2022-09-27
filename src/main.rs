@@ -10,7 +10,6 @@ mod acs;
 mod app;
 mod driver;
 mod drone;
-mod fsm;
 mod mbus;
 mod message;
 
