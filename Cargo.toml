@@ -54,15 +54,17 @@ shared-bus = "0.2.3"
 spin = "0.9.3"
 xtask = {path = "../xtask", default-features = false, features = ["stm32f4", "xtask_executor", "xtask_scheduler", "rtt_log", "timer"]}
 yakf = {git = "https://github.com/gqf2008/yakf.git"}
-eskf = {git = "https://github.com/nordmoen/eskf-rs.git", default-features = false}
+# eskf = {git = "https://github.com/nordmoen/eskf-rs.git", default-features = false}
 
 [dependencies.nalgebra]
 default-features = false
 features = ["libm-force"]
-version = "0.30"
+version = "0.30.1"
+
 [dependencies.simba]
 version = "0.7"
 default-features = false
+
 
 [profile.release]
 codegen-units = 1
